@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="en">
+	<head>
+		<title>Age of Football</title>
+		<script type="text/javascript" src="./jquery-1.7.min.js"></script>
+		<script type="text/javascript" src="/socket.io/socket.io.js"></script>
+		<script type="text/javascript" src="./vec2.js"></script>
+		<script type="text/javascript" src="./team.js"></script>
+		<script type="text/javascript" src="./text.js"></script>
+		<script type="text/javascript" src="./keyboard.js"></script>
+		<script type="text/javascript" src="./object.js"></script>
+		<script type="text/javascript" src="./dungeon.js"></script>
+		<script type="text/javascript" src="./screen.js"></script>
+		<script type="text/javascript" src="./aofclient.js"></script>
+		<style = type="text/css">
+			body {
+				background-color: #000;
+				color: #fff;
+				font-size: 28px;
+				font-weight: bold;
+				margin: 0;
+				padding: 0;
+				font-family: sans-serif;
+			}
+			#log {
+				position: absolute;
+				margin-bottom: 100px;
+				z-index: 0;
+			}
+			#log ul {
+				padding: 0;
+				margin: 0;
+			}
+			#log ul li {
+				list-style-type: none;
+			}
+			#arena {
+				background-color: black;
+				margin: auto;
+				width: 800px;
+				height: 600px;
+				z-index: 100;
+			}
+			#console {
+				background-color: black;
+				color: white;
+				border-top:1px solid white;
+				position: fixed;
+				bottom: 0;
+				width: 100%;
+				font-size: 18px;
+			}
+			#console input {
+				width: 100%;
+				background-color: inherit;
+				color: inherit;
+				font-size: inherit;
+			}
+		</style>
+	</head>
+	<body> 
+		<center>
+		<h1> Age of Football </h1>
+		</center>
+		<div id=log><ul></ul></div>
+		<!-- <div id="console">
+			<input type="text" id="entry"/>
+		</div> -->
+		<div id="arena">
+			<canvas id="main" width="800" height="600"></canvas>
+		</div>
+	</body>	
+</html>
