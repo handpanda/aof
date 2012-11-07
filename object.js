@@ -4,6 +4,8 @@
 	
 */
 
+// Field reference dimensions
+// Object reference dimensions
 var dims = {
 	fieldLength : 2000,
 	fieldWidth : 1000,
@@ -27,6 +29,7 @@ var dims = {
 	headLength : 30,
 }
 
+// Specifications for objects
 var type = {
 	player    : { name: 'player', width: 40  , height: 40, color: 'white' },
 	ball      : { name: 'ball', width: 25  , height: 25, color: 'white' },
@@ -51,6 +54,9 @@ var contact = function(dir) {
 	this.dir = dir;
 }
 
+/*
+	Stages of a kick (UNIMPLEMENTED)
+*/
 var kickState = {
 	idle: 0,
 	charging: 1,
@@ -59,25 +65,33 @@ var kickState = {
 	kicking: 4,
 }
 
+/*
+	Player actions and how they are related
+*/	
 var ACT = {
 	STAND: 0,
 	RUN: 1,
 	KICK: 2,
 	SLIDE: 3,
+	PUNT: 4,
 
-	ACTIONS: 4, // Total number of actions
+	ACTIONS: 5, // Total number of actions
 
-	// from:	STAND	RUN	KICK	SLIDE	
-	transfer: [	true, 	true, 	true, 	true,	// to:	STAND
-		   	true, 	true, 	true, 	false,  // 	RUN
-		   	true, 	true, 	false, 	false,	//	KICK
-		   	true, 	true, 	false, 	false,	// 	SLIDE
+	
+	// Can a player doing action A switch to action B?
+	// from:	STAND	RUN	KICK	SLIDE	PUNT
+	transfer: [	true, 	true, 	true, 	true,	true,  // to:	STAND
+		   	true, 	true, 	true, 	false,  true,  // 	RUN
+		   	true, 	true, 	false, 	false,	false, //	KICK
+		   	true, 	true, 	false, 	false,	false, // 	SLIDE
+			true,	true,	false,  false,  false, //	PUNT
 								],
 
 	canTransfer: function(fromaction, toaction) {
 		return ACT.transfer[fromaction + toaction * ACT.ACTIONS];
 	},
 
+	// Can a player doing some action move freely (i.e with the arrow keys) ?
 	canAccelerate: function(action) {
 		switch (action) {
 		case ACT.STAND:
@@ -85,11 +99,13 @@ var ACT = {
 		case ACT.KICK:
 			return true;
 		case ACT.SLIDE:
+		case ACT.PUNT:
 			return false;
 		}
 	}
 }
 
+// Kinds of players, will be used for AI (UNIMPLEMENTED)
 var CLASS = {
 	GOALKEEPER: 0,
 	DEFENCEMAN: 1,
@@ -99,10 +115,13 @@ var CLASS = {
 
 var idstat = 0;
 
+/*
+	One of the objects in the game - ball, player, field region
+*/
 var gameObject = function(pos, offset, objtype, side) {
 	this.type = 	objtype;
 	this.pos = 	pos;
-	this.vel = 	new vec2(0, 0);
+	this.vel = 	new Vec2(0, 0);
 	this.offset = 	offset;
 	this.width =	this.type.width;
 	this.height = 	this.type.height;
@@ -110,9 +129,9 @@ var gameObject = function(pos, offset, objtype, side) {
 	this.clientid = 0;
 	this.ping = 0;
 	this.angle = 	0.0;
-	this.center =   new vec2(this.pos.x + this.width / 2, this.pos.y + this.width / 2);
+	this.center =   new Vec2(this.pos.x + this.width / 2, this.pos.y + this.width / 2);
 	this.centerToPos = this.center.minus(this.pos);
-	this.facedir = 	new vec2(Math.cos(this.angle), Math.sin(this.angle));
+	this.facedir = 	new Vec2(Math.cos(this.angle), Math.sin(this.angle));
 	this.action  = 	ACT.STAND;
 	this.strafing = false;
 	this.speed = 	0;
@@ -127,6 +146,7 @@ var gameObject = function(pos, offset, objtype, side) {
 	this.anchor = this.pos.copy();
 	this.radius = 0;
 
+	// Player kick function (Unused)
 	this.kick = {
 		charge: 0.0,
 		power: 0.0,
@@ -138,28 +158,31 @@ var gameObject = function(pos, offset, objtype, side) {
 		this.angle = Math.atan2(this.vel.y, this.vel.x);
 	}
 
+	// Enable / disable AI control for a player
 	this.enableAuto = function() {
 		this.isAuto = true;
 	}
-
 	this.disableAuto = function() {
 		this.isAuto = false;
 	}
 	
+	// Set the "home" position for a player
 	this.setAnchor = function(anchor, radius) {
 		this.anchor.set(anchor);
 		this.radius = radius;
 	}
 
+	// Turn towards a point on the field
 	this.lookAt = function(pos) {
 		this.angle = Math.atan2(pos.y - this.pos.y, pos.x - this.pos.x);
 		this.angle = Math.floor((this.angle + Math.PI / 8) / (Math.PI / 4));
 		this.angle *= Math.PI / 4;
 	}
 
+	// Attempt to move toward a point on the field
 	this.goToward = function(pos) {
 		if (ACT.canAccelerate(this.action)) {
-			this.vel.set(new vec2(0, 0));
+			this.vel.set(new Vec2(0, 0));
 
 			if (Math.abs(this.pos.x - pos.x) > this.topSpeed) {
 				if (this.pos.x < pos.x) this.vel.x = this.topSpeed;	
@@ -176,6 +199,7 @@ var gameObject = function(pos, offset, objtype, side) {
 		}
 	}
 
+	// Initialize the player
 	switch (this.type) {
 		case type.player:
 			this.topSpeed = 8;
@@ -194,11 +218,16 @@ var gameObject = function(pos, offset, objtype, side) {
 						this.action = ACT.SLIDE;
 						this.vel.add(this.facedir.times(15));
 						break;
+					case ACT.PUNT:
+						// Punt
+						this.action = ACT.PUNT;
+						break;
 				}
 			}
 			break;
 	}
 	
+	// Draw the object
 	this.draw = function(context) {
 		context.save();
 			context.translate(this.pos.x, this.pos.y);
@@ -209,7 +238,14 @@ var gameObject = function(pos, offset, objtype, side) {
 
 				switch (this.type.name) {
 					case type.ball.name:
-						context.fillRect(0, 0, this.width * (1 - this.z), this.height * (1 - this.z));
+						context.save();
+							context.scale(1 - this.z, 1 - this.z);
+							context.translate(-this.width / 2, -this.height / 2);
+							context.fillRect(0, 0, this.width, this.height);
+						context.restore();
+						context.font = '24px serif';
+						context.fillStyle = 'black';
+						context.fillText(this.z, 0, 0);
 						break;
 					case type.field.name:
 						context.fillRect(0, 0, this.width, this.height);
@@ -332,6 +368,8 @@ var gameObject = function(pos, offset, objtype, side) {
 		this.type = 	 data.type;
 		this.pos = 	 data.pos;	
 		this.vel = 	 data.vel;
+		this.z = 	 data.z;
+		this.velZ =	 data.velZ;
 		this.width = 	 data.width;
 		this.height = 	 data.height;	
 		this.angle = 	 data.angle;
@@ -344,19 +382,12 @@ var gameObject = function(pos, offset, objtype, side) {
 		this.update();
 	}	
 
+	// Update reference values for the object
 	this.update = function() {
 		this.center.x =  this.pos.x + this.width / 2;
 		this.center.y =  this.pos.y + this.height / 2;
 		this.facedir.x = Math.cos(this.angle);
 		this.facedir.y = Math.sin(this.angle);	
-	
-		this.z += this.velZ;		
-		if (this.z >= 0) {
-			this.z = 0; 
-			this.velZ = 0;
-		} else {
-			this.velZ += 0.1;
-		}
 	}
 
 	// Check for overlap with another object (both are modeled as rectangles with (x, y) in the top left corner)
@@ -371,6 +402,7 @@ var gameObject = function(pos, offset, objtype, side) {
 		return false;			
 	}
 
+	// Bounce off some other object (used by the ball only)
 	this.bounce = function(otherObject) {
 		if (this.overlaps(otherObject)) {
 			if (this.pos.x > otherObject.pos.x + otherObject.width) {

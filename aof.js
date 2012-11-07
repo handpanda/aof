@@ -4,20 +4,28 @@ var http = require('http');
 	util = require('util');
 	path = require('path');
 
-var vec2 = require('./vec2.js');
+var Vec2 = require('./Vec2.js');
 
 var objects = require('./object.js');
-var dungeon = require('./dungeon.js');
 var discrete = require('./discrete.js');
 var team = require('./team.js');
-var key = require('./keyboard.js');
 var field = require('./field.js');
 var event = require('./event.js');
 var game = require('./game.js');
 var lobby = require('./lobby.js');
 
+var KEYSTATE = {
+	UP : 0,
+	HIT : 1,
+	HELD : 2,
+};
+
 var clients = [];
 
+/*
+	Server Class
+
+*/
 var server = http.createServer(function(request, response) {
 
 	var contentType = 'text/html';
@@ -52,7 +60,7 @@ menu.addRandomGame();
 //menu.addRandomGame();
 console.log(menu.games.length);
 
-var MAX_PING = 10000;
+var MAX_LATENCY = 10000;
 
 sio.sockets.on('connection', function(client) {
 
@@ -69,9 +77,11 @@ sio.sockets.on('connection', function(client) {
 
 	client.game = null;
 	client.player = null;
+	client.waiting = false;
 	
-	client.on('list', function(data) {
+	console.log('Client joined from ' + client.handshake.address.address + ":" + client.handshake.address.port + " (" + client.ident + ")");
 
+	client.on('list', function(data) {
 		for (g in menu.games) {
 			client.emit('listentry', menu.games[g].getClientData());
 		} 
@@ -83,7 +93,8 @@ sio.sockets.on('connection', function(client) {
 	});
 
 	client.on('join', function(data) {
-		
+		var msg = 'Client ' + client.ident + ' attempted to join game ' + data + '...';
+
 		client.game = null;
 
 		for (g in menu.games) {
@@ -94,13 +105,15 @@ sio.sockets.on('connection', function(client) {
 		}
 		
 		if (client.game == null) {
+			console.log(msg + 'failed');
 			client.emit('joinstatus', { succeed: false, gameId: data, reason: 'No game matched id' });
 			return;
 		}
 
+		console.log(msg + 'succeeded');
 		client.emit('joinstatus', { succeed: true, gameId: data, reason: '' });
 
-		var player = new objects.gameObject(new vec2(0, 0), new vec2(0, 0), objects.type.player, clientnum % 2 ? 'left' : 'right');
+		var player = new objects.gameObject(new Vec2(0, 0), new Vec2(0, 0), objects.type.player, clientnum % 2 ? 'left' : 'right');
 
 		//player.id = clientnum;
 
@@ -140,11 +153,14 @@ sio.sockets.on('connection', function(client) {
 	});
 
 	client.on('leave', function(data) {
+		var msg = 'Client ' + client.ident + ' attempted to leave game ' + data + '...';
+				
 		if (client.game == null) {
-			console.log('Client ' + client.ident + ' attempted to nonexistent game');
+			console.log(msg + 'no such game');
 			return;
 		}
 
+		console.log(msg + 'succeeded');
 		client.game.removePlayer(client.player);
 
 		client.ping = 0;
@@ -172,58 +188,66 @@ sio.sockets.on('connection', function(client) {
 
 	client.on('input', function(data) {
 		if (client.player != null) {
-		var doUpdate = false;		
+			var doUpdate = false;		
 
-		if (objects.ACT.canAccelerate(client.player.action)) {
-			client.player.vel.zero();
+			if (objects.ACT.canAccelerate(client.player.action)) {
+				client.player.vel.zero();
 
-			var playerSpeed = client.player.topSpeed * 1.25;
-			if (client.player.strafing) playerSpeed *= 0.75;
+				var playerSpeed = client.player.topSpeed * 1.25;
+				if (client.player.strafing) playerSpeed *= 0.75;
 			
-			if (data.left) {
-				client.player.vel.x -= playerSpeed;
-				doUpdate = true;
-			}
+				if (data.left) {
+					client.player.vel.x -= playerSpeed;
+					doUpdate = true;
+				}
 
-			if (data.up) {
-				client.player.vel.y -= playerSpeed;
-				doUpdate = true;
-			}
+				if (data.up) {
+					client.player.vel.y -= playerSpeed;
+					doUpdate = true;
+				}
 
-			if (data.right) {
-				client.player.vel.x += playerSpeed;
-				doUpdate = true;
-			}
+				if (data.right) {
+					client.player.vel.x += playerSpeed;
+					doUpdate = true;
+				}
 
-			if (data.down) {
-				client.player.vel.y += playerSpeed;
-				doUpdate = true;
-			}
-			var speed = client.player.vel.length();
+				if (data.down) {
+					client.player.vel.y += playerSpeed;
+					doUpdate = true;
+				}
+				var speed = client.player.vel.length();
 	
-			if (speed > playerSpeed) client.player.vel.scale(playerSpeed / speed);
-		}
-
-		var speed = client.player.vel.length()
-
-		if (data.z == key.state.hit) {
-			if (client.player.hasBall) {
-				client.player.attemptAction(objects.ACT.KICK);
-			} else {
-				client.player.attemptAction(objects.ACT.SLIDE);
+				if (speed > playerSpeed) client.player.vel.scale(playerSpeed / speed);
 			}
-		}
 
-		client.player.strafing = false;
-		if (data.x) {
-			client.player.strafing = true;
-		}
+			var speed = client.player.vel.length()
 
-		if (doUpdate) {
-			if (!client.player.strafing) client.player.updateAngle();
+			if (data.z == KEYSTATE.HIT) {
+				if (client.player.hasBall) {
+					client.player.attemptAction(objects.ACT.KICK);
+				} else {
+					client.player.attemptAction(objects.ACT.SLIDE);
+				}
+			}
 
-			client.player.update();
-		}
+			if (data.x == KEYSTATE.HIT) {
+				if (client.player.hasBall) {
+					client.player.attemptAction(objects.ACT.PUNT);
+				} else { 
+					
+				}
+			}
+
+			client.player.strafing = false;
+			if (data.c) {
+				client.player.strafing = true;
+			}
+
+			if (doUpdate) {
+				if (!client.player.strafing) client.player.updateAngle();
+
+				client.player.update();
+			}
 		}
 	});
 
@@ -236,21 +260,26 @@ sio.sockets.on('connection', function(client) {
 });
 
 function update() {
+
+//////////////////
+// Update Games //
+//////////////////
+
 	for (g in menu.games) {
 		var ga = menu.games[g];	
 
 		if (ga != null) {
-			ga.updatePlayers();
+			ga.updatePacketQueue();
 
-			ga.updateBall();
+			ga.update();
 
-			/* See if the ball has caused any events on the field */
+			// See if the ball has caused any events on the field
 			if (e = ga.gamefield.interact(ga.ball)) {
 				ga.react(e);
 
 				switch (e.type) {
 				case event.type.GOAL:
-					//sio.sockets.send('Goal! ' + ga.team1.name + ' ' + ga.data.leftScore + ', ' + ga.team2.name + ' ' + ga.data.rightScore);
+
 					break;
 				case event.type.GOALKICK:
 				case event.type.THROWIN:
@@ -265,48 +294,69 @@ function update() {
 			ga.updateBallHolder();	
 		}
 	}
+
+///////////////////////////////
+// Send Game Data to Clients //
+///////////////////////////////
+
 	for (c in clients) {
 		client = clients[c];
 
-		if (client.game != null) {
-
-			for (p in client.game.players) {
-				client.emit('player', client.game.players[p]);
-			}
-			client.emit('gameData', client.game.data);
-			client.emit('ball', client.game.ball);
-		}
-
-		// Timeout
+		// If the client recently pinged back
 		if (client.ping == 0) {
+
+			// Send game data 
+			if (client.game != null) {
+
+				for (p in client.game.players) {
+					client.emit('player', client.game.players[p]);
+				}
+
+				client.emit('gameData', client.game.data);
+				client.emit('ball', client.game.ball);
+				client.game.sendPackets( client );
+			}
+
+			// Ping the client again
 			client.emit('marco', null);
 		}
 
+		// If the client is in a game, calculate their latency (resets to 0 when the player pings back)
 		if (client.game != null) client.ping++;
 	}
+
+
+///////////////////////////////
+// Drop Unresponsive Clients //
+///////////////////////////////
 
 	for (c in clients) {
 		client = clients[c];
 	
-		if (client.ping > MAX_PING) {
+		// If the client's latency is too high, drop them from the server
+		if (client.ping > MAX_LATENCY) {
 		
 			if (client.game != null && client.player != null) {
+
+				// Remove the client's player from whatever game they are in
 				client.game.removePlayer(client.player);
 
+				// Order all other clients to kill that player
 				client.broadcast.emit('kill', client.playerid);
 			}
 
+			// Drop the client
 			clients.splice(c, 1);
 		}		
 	}
 }
 	
+// Update the official time of each game once per second
 var updateTimes = function() {
 	for (g in menu.games) {
 		menu.games[g].updateTime();
 	}
 }
-
 var updateTimeInterval = setInterval(updateTimes, 1000);
 
 var updateInterval = setInterval(update, 40);

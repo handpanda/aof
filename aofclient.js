@@ -35,7 +35,6 @@ var imgBottomLeft = new regularImage("./mongol1.png");
 */
 var socket;
 
-var ballHolder = null;
 var ball = null;
 
 var playerid = 0;
@@ -51,6 +50,8 @@ var rightTeam = null;
 var leftScore = 0;
 var rightScore = 0;
 var time = 0;
+var gameStopped = false;
+var gameEvent = null;
 
 var currentRoom = null;
 
@@ -59,11 +60,17 @@ var currentScreen = screen.LIST;
 var gamelist = [];
 var elementList = [];
 
+var overlay = null;
+
 var canvas, context;
+
+var canvasDiagonal;
 
 $(document).ready(function() {
 	canvas = document.getElementById("main");
 	context = canvas.getContext("2d");
+
+	canvasDiagonal = Math.sqrt( canvas.width * canvas.width + canvas.height * canvas.height );
 
 	socket = new io.connect('http://localhost:4000');
 	var entry_el = $('#entry');
@@ -101,7 +108,7 @@ $(document).ready(function() {
 	});
 
 	socket.on('currentRoom', function(data) {
-		if (currentRoom == null) currentRoom = new room(new vec2(0, 0), 0, 0);
+		if (currentRoom == null) currentRoom = new room(new Vec2(0, 0), 0, 0);
 		currentRoom.grab(data);
 	});
 
@@ -115,7 +122,7 @@ $(document).ready(function() {
 			}
 		}
 		if (!found) {
-			players.push(new gameObject(new vec2(0, 0), new vec2(0, 0), type.ball));
+			players.push(new gameObject(new Vec2(0, 0), new Vec2(0, 0), type.ball));
 			players[players.length - 1].clientid = data.clientid;
 			players[players.length - 1].id = data.id;
 			players[players.length - 1].grab(data);
@@ -129,7 +136,7 @@ $(document).ready(function() {
 	});
 
 	socket.on('zone', function(data) {
-		zones.push(new gameObject(new vec2(0, 0), new vec2(0, 0), type.ball));
+		zones.push(new gameObject(new Vec2(0, 0), new Vec2(0, 0), type.ball));
 		zones[zones.length - 1].grab(data);
 		console.log("zone");
 	});
@@ -137,7 +144,7 @@ $(document).ready(function() {
 	socket.on('team', function(data) {
 		switch (data.side) {
 			case 'left':
-				leftTeam = new team(data.name, data.side);
+				leftTeam = new Team(data.name, data.side);
 
 /*				switch (leftTeam.name) {
 					case "Mongols":
@@ -168,7 +175,7 @@ $(document).ready(function() {
 */	
 				break;
 			case 'right':
-				rightTeam = new team(data.name, data.side);
+				rightTeam = new Team(data.name, data.side);
 /*
 				switch (rightTeam.name) {
 					case "Mongols":
@@ -201,7 +208,7 @@ $(document).ready(function() {
 	});
 
 	socket.on('ball', function(data) {
-		if (ball == null) ball = new gameObject(new vec2(0, 0), new vec2(0, 0), type.ball);
+		if (ball == null) ball = new gameObject(new Vec2(0, 0), new Vec2(0, 0), type.ball);
 		ball.grab(data);
 	});
 
@@ -209,6 +216,19 @@ $(document).ready(function() {
 		leftScore = data.leftScore;
 		rightScore = data.rightScore;
 		time = data.time;
+		gameStopped = data.stopped;
+		gameEvent = data.event;
+
+		if ( overlay == null && gameEvent == eventType.GOAL ) {
+			overlay = new goalAnim();
+		}
+
+		if ( overlay == null && gameEvent == eventType.GOALKICK ) {
+			overlay = new goalKickAnim();
+		}
+		if ( overlay != null && !gameStopped ) {
+			overlay.complete();
+		}
 	});	
 
 	socket.on('listentry', function(data) {
@@ -245,18 +265,15 @@ $(document).ready(function() {
 	});
 
 	socket.on('marco', function(data) {
-		console.log('polo');
 		socket.emit('polo', null);
 	});
 
 	document.onmousemove = mouseMoveHandler;
 	document.onmousedown = mouseDownHandler;
 	document.onmouseup = mouseUpHandler;
-	document.onkeydown = keyDownHandler;
-	document.onkeyup = keyUpHandler;
 });	
 
-mousePos = new vec2(0, 0);
+mousePos = new Vec2(0, 0);
 mousedown = false;
 
 function mouseMoveHandler(event) {
@@ -280,72 +297,26 @@ function mouseUpHandler(event) {
 	mousedown = false;
 }
 
-
-function keyDownHandler(event) {
-	switch (event.keyCode) {
-		case 37:
-			if (!keys.left) keys.left = state.hit; 
-			break;				
-		case 38: 
-			if (!keys.up) keys.up = state.hit; 
-			break;
-		case 39:
-			if (!keys.right) keys.right = state.hit;
-			break;
-		case 40:
-			if (!keys.down) keys.down = state.hit;
-			break;
-		case 88:
-			if (!keys.x) keys.x = state.hit;
-			break;
-		case 90:
-			if (!keys.z) keys.z = state.hit;
-			break;
-	}	
-}	
-
-function keyUpHandler(event) {
-	switch (event.keyCode) {				
-		case 37: 
-			keys.left = state.up; 
-			break;				
-		case 38: 
-			keys.up = state.up; 
-			break;
-		case 39:
-			keys.right = state.up;
-			break;
-		case 40:
-			keys.down = state.up;
-			break;
-		case 88:
-			keys.x = state.up;
-			break;
-		case 90:
-			keys.z = state.up;
-			break;
-	}	
-}	
-
 function updateKeys() {
-	if (keys.left == state.hit) keys.left = state.held;
-	if (keys.up == state.hit) keys.up = state.held;
-	if (keys.right == state.hit) keys.right = state.held;
-	if (keys.down == state.hit) keys.down = state.held;
-	if (keys.z == state.hit) keys.z = state.held;
-	if (keys.x == state.hit) keys.x = state.held;
+	keys.left = keyboardState[KEY.LEFT];
+	keys.right = keyboardState[KEY.RIGHT];
+	keys.up = keyboardState[KEY.UP];
+	keys.down = keyboardState[KEY.DOWN];
+	keys.z = keyboardState[KEY.Z];
+	keys.x = keyboardState[KEY.X];
+	keys.c = keyboardState[KEY.C];
 }
 
-function drawDungeon(context) {
+function drawField(context) {
 	// If room is smaller than screen area, center the view on the room
 	// Otherwise, center the view on the player, unless the edge of the room has been reached
 
-	var offset = new vec2(0, 0);
+	var offset = new Vec2(0, 0);
 
 	var target;
 
 	if (clientPlayer != null) target = clientPlayer.pos;
-	else target = new vec2(canvas.width / 2, canvas.height / 2);
+	else target = new Vec2(canvas.width / 2, canvas.height / 2);
 
 	if (currentRoom != null) {
 		if (currentRoom.width < canvas.width) {
@@ -424,7 +395,7 @@ var refreshMenu = function() {
 			// List of games in progress
 			for (g in gamelist) {
 				console.log(gamelist[g]);
-				elementList.push(new menuElement('button', 'game', gamelist[g].team1Name + ' vs ' + gamelist[g].team2Name, new vec2(menudims.list.xPos, y), menudims.list.width, buttonHeight, 
+				elementList.push(new menuElement('button', 'game', gamelist[g].team1Name + ' vs ' + gamelist[g].team2Name, new Vec2(menudims.list.xPos, y), menudims.list.width, buttonHeight, 
 							{ id: gamelist[g].id },
 							function() {
 								attemptToJoinGame( this.data.id );
@@ -434,7 +405,7 @@ var refreshMenu = function() {
 			}
 
 			// Button to make a new game
-			elementList.push(new menuElement('button', 'new game', 'New Game', new vec2(menudims.list.xPos, y), menudims.list.width, buttonHeight,
+			elementList.push(new menuElement('button', 'new game', 'New Game', new Vec2(menudims.list.xPos, y), menudims.list.width, buttonHeight,
 						{ },
 						function() {
 							switchScreen(screen.NEWGAME);
@@ -445,12 +416,12 @@ var refreshMenu = function() {
 			console.log('new game');
 			var y = menudims.list.yPos + vScroll;
 			
-			elementList.push(new menuElement('textbox', 'team1', 'Team 1:', new vec2(menudims.list.xPos, y), menudims.list.width, buttonHeight, { }, null));
+			elementList.push(new menuElement('textbox', 'team1', 'Team 1:', new Vec2(menudims.list.xPos, y), menudims.list.width, buttonHeight, { }, null));
 			y += buttonHeight + interButtonSpacing;	
 
 			for (n in names) {
 				console.log(names[n]);
-				elementList.push(new menuElement('button', 'team1', names[n], new vec2(menudims.list.xPos, y), menudims.list.width, buttonHeight,
+				elementList.push(new menuElement('button', 'team1', names[n], new Vec2(menudims.list.xPos, y), menudims.list.width, buttonHeight,
 							{ },
 							function() {
 								team1Name = this.title;
@@ -463,12 +434,12 @@ var refreshMenu = function() {
 
 			y += buttonHeight + interButtonSpacing;	
 
-			elementList.push(new menuElement('textbox', 'team2', 'Team 2:', new vec2(menudims.list.xPos, y), menudims.list.width, buttonHeight, { }, null));
+			elementList.push(new menuElement('textbox', 'team2', 'Team 2:', new Vec2(menudims.list.xPos, y), menudims.list.width, buttonHeight, { }, null));
 			y += buttonHeight + interButtonSpacing;				
 
 			for (n in names) {
 				console.log(names[n]);
-				elementList.push(new menuElement('button', 'team2', names[n], new vec2(menudims.list.xPos, y), menudims.list.width, buttonHeight, 
+				elementList.push(new menuElement('button', 'team2', names[n], new Vec2(menudims.list.xPos, y), menudims.list.width, buttonHeight, 
 							{ },
 							function() {
 								team2Name = this.title;
@@ -481,7 +452,7 @@ var refreshMenu = function() {
 
 			y += buttonHeight + interButtonSpacing;	
 
-			elementList.push(new menuElement('button', 'start', 'Start!', new vec2(menudims.list.xPos, y), menudims.list.width, buttonHeight,
+			elementList.push(new menuElement('button', 'start', 'Start!', new Vec2(menudims.list.xPos, y), menudims.list.width, buttonHeight,
 						{ },
 						function() {
 							attemptToAddGame(team1Name, team2Name);	
@@ -492,7 +463,7 @@ var refreshMenu = function() {
 			break;	
 		case screen.GAME:
 			console.log('game');
-			elementList.push(new menuElement('button', 'exit', 'Back to Lobby', new vec2(menudims.exitbutton.xPos, menudims.exitbutton.yPos),
+			elementList.push(new menuElement('button', 'exit', 'Back to Lobby', new Vec2(menudims.exitbutton.xPos, menudims.exitbutton.yPos),
 						menudims.exitbutton.width, 24, 
 						{ },
 						function() {
@@ -571,62 +542,17 @@ var leaveGame = function() {
 	switchScreen(screen.LIST);
 }	
 
-var menuElement = function(type, name, title, pos, width, height, data, action) {
-	this.type = type;
-	this.name = name;
-	this.title = title;
-	this.pos = pos;
-	this.width = width;
-	this.height = height;
-	this.data = data;
-	this.action = action;
-
-	this.hovered = false;
-	this.selected = false;
-	this.chosen = false;
-
-	this.draw = function(context) {
-		switch (this.type) {
-			case 'button':
-				if (this.chosen) context.fillStyle = color2;
-				else if (this.selected) context.fillStyle = color2;
-				else context.fillStyle = color1;
-
-				context.fillRect(this.pos.x, this.pos.y, this.width, this.height);
-		
-				context.textAlign = 'center';
-				context.font = '24pt bold';
-				if (this.chosen) context.fillStyle = color4;
-				else if (this.selected) context.fillStyle = color1;
-				else if (this.hovered) context.fillStyle = color3;
-				else context.fillStyle = color2;
-	
-				context.fillText(this.title, pos.x + this.width / 2, pos.y + this.height);
-				break;
-			case 'textbox':
-				context.fillStyle = color3;
-
-				context.fillRect(this.pos.x, this.pos.y, this.width, this.height);
-		
-				context.textAlign = 'center';
-				context.font = '24pt bold';
-				context.fillStyle = color2;
-	
-				context.fillText(this.title, pos.x + this.width / 2, pos.y + this.height);
-				break;
-		}
-	}
-
-	this.doAction = function() {
-		if (this.action != null) this.action();
-	}
-}
-
 var updateInterval;
+
 function update() {
+	if ( overlay != null ) socket.emit( 'waiting', null );
 
 	updateMenu();
 
+	render();
+}
+
+function render() {
 	context.clearRect(0, 0, canvas.width, canvas.height);
 	context.beginPath();
 
@@ -663,12 +589,13 @@ function update() {
 	case screen.GAME:
 		socket.emit('input', keys);
 		updateKeys();
+		keyboardStateUpdater();
 
 		for (p in players) {
 			if (players[p].id == playerid && playerid > 0) clientPlayer = players[p];
 		}
 
-		drawDungeon(context);
+		drawField(context);
 
 		for (l in elementList) {
 			elementList[l].draw(context);
@@ -694,7 +621,8 @@ function update() {
 		break;
 	}
 
-	context.fillStyle = 'white';
-	context.fillRect(mousePos.x, mousePos.y, 20, 20);
+	if ( overlay != null ) {
+		overlay.loop();
+		if ( overlay.removeThis ) overlay = null;
+	}
 }
-
