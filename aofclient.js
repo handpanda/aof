@@ -11,10 +11,10 @@ var keys = {
 var regularImage = function(filename) {
 		this.image = new Image();
 		this.image.src = filename;
+}
 
-		this.draw = function(context, posX, posY, width) {
-			context.drawImage(this.image, posX, posY, width, this.image.height * width / this.image.width);
-		};
+regularImage.prototype.draw = function(context, posX, posY, width) {
+	context.drawImage(this.image, posX, posY, width, this.image.height * width / this.image.width);
 }
 /*
 var imgRoman1 = new regularImage("./roman1.png");
@@ -108,7 +108,7 @@ $(document).ready(function() {
 	});
 
 	socket.on('currentRoom', function(data) {
-		if (currentRoom == null) currentRoom = new room(new Vec2(0, 0), 0, 0);
+		if (currentRoom == null) currentRoom = new Room(new Vec2(0, 0), 0, 0);
 		currentRoom.grab(data);
 	});
 
@@ -122,7 +122,7 @@ $(document).ready(function() {
 			}
 		}
 		if (!found) {
-			players.push(new gameObject(new Vec2(0, 0), new Vec2(0, 0), type.ball));
+			players.push(new Entity(new Vec2(0, 0), new Vec2(0, 0), type.ball));
 			players[players.length - 1].clientid = data.clientid;
 			players[players.length - 1].id = data.id;
 			players[players.length - 1].grab(data);
@@ -136,7 +136,7 @@ $(document).ready(function() {
 	});
 
 	socket.on('zone', function(data) {
-		zones.push(new gameObject(new Vec2(0, 0), new Vec2(0, 0), type.ball));
+		zones.push(new Entity(new Vec2(0, 0), new Vec2(0, 0), type.ball));
 		zones[zones.length - 1].grab(data);
 		console.log("zone");
 	});
@@ -208,7 +208,7 @@ $(document).ready(function() {
 	});
 
 	socket.on('ball', function(data) {
-		if (ball == null) ball = new gameObject(new Vec2(0, 0), new Vec2(0, 0), type.ball);
+		if (ball == null) ball = new Entity(new Vec2(0, 0), new Vec2(0, 0), type.ball);
 		ball.grab(data);
 	});
 

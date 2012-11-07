@@ -22,66 +22,66 @@ function goalAnim() {
 	this.wipeStripes = canvasDiagonal / this.stripeWidth + 2;
 
 	this.stage = 0;
-	
-	this.complete = function() {
-		this.stage = 3;
-	}
+}
 
-	this.update = function() {
-		switch ( this.stage ) {
-			case 0:
-				this.posX += this.velX;
-				if (this.posX < -this.width) {
-					this.posX = canvas.width;
-					this.velX *= 0.9;
-					this.passes++;
-				}
-				if ( this.passes > 5 ) this.stage = 1;
-				break;	
-			case 1:
-				this.posX = 0.8 * this.posX + 0.2 * (canvas.width / 2);
-				if ( Math.abs( this.posX - canvas.width / 2 ) < 10 ) {
-					this.stage = 2;
-					this.posX = canvas.width / 2;
-				}
-				break;
-			case 2:
-				this.wipeY += this.wipeYVel;
-				while ( this.wipeY < -canvasDiagonal - this.stripeWidth * 2 ) this.wipeY += this.stripeWidth * 2;
-				break;
-			case 3:
-				this.wipeY += this.wipeYVel;
-				if ( this.wipeY < -canvasDiagonal * 2 ) this.removeThis = true;
-				break;
-		}
-	}
+goalAnim.prototype.complete = function() {
+	this.stage = 3;
+}
 
-	this.render = function( context ) {
-		if ( this.stage < 3 ) {
-			context.font = this.style;
-			context.strokeStyle = 'white';
-			context.lineWidth = 15;
-			context.strokeText( this.string, this.posX, this.posY );
-			context.fillStyle = 'red';
-			context.fillText( this.string, this.posX, this.posY );
-		}
-		context.save();
-		context.translate( canvas.width, canvas.height );
-		context.rotate( -Math.PI / 4 );
-		context.translate( -canvasDiagonal, 0);
-		for ( var y = 0; y < this.wipeStripes; y++ ) {
-			if ( y % 2 ) context.fillStyle = 'red';
-			else context.fillStyle = 'white';
-
-			context.fillRect( 0, this.wipeY + y * this.stripeWidth, canvasDiagonal * 2, this.stripeWidth);
-		}
-		context.restore();
+goalAnim.prototype.update = function() {
+	switch ( this.stage ) {
+		case 0:
+			this.posX += this.velX;
+			if (this.posX < -this.width) {
+				this.posX = canvas.width;
+				this.velX *= 0.9;
+				this.passes++;
+			}
+			if ( this.passes > 5 ) this.stage = 1;
+			break;	
+		case 1:
+			this.posX = 0.8 * this.posX + 0.2 * (canvas.width / 2);
+			if ( Math.abs( this.posX - canvas.width / 2 ) < 10 ) {
+				this.stage = 2;
+				this.posX = canvas.width / 2;
+			}
+			break;
+		case 2:
+			this.wipeY += this.wipeYVel;
+			while ( this.wipeY < -canvasDiagonal - this.stripeWidth * 2 ) this.wipeY += this.stripeWidth * 2;
+			break;
+		case 3:
+			this.wipeY += this.wipeYVel;
+			if ( this.wipeY < -canvasDiagonal * 2 ) this.removeThis = true;
+			break;
 	}
+}
 
-	this.loop = function() {
-		this.update();
-		this.render( context );
+goalAnim.prototype.render = function( context ) {
+	if ( this.stage < 3 ) {
+		context.font = this.style;
+		context.strokeStyle = 'white';
+		context.lineWidth = 15;
+		context.strokeText( this.string, this.posX, this.posY );
+		context.fillStyle = 'red';
+		context.fillText( this.string, this.posX, this.posY );
 	}
+	context.save();
+	context.translate( canvas.width, canvas.height );
+	context.rotate( -Math.PI / 4 );
+	context.translate( -canvasDiagonal, 0);
+	for ( var y = 0; y < this.wipeStripes; y++ ) {
+		if ( y % 2 ) context.fillStyle = 'red';
+		else context.fillStyle = 'white';
+
+		context.fillRect( 0, this.wipeY + y * this.stripeWidth, canvasDiagonal * 2, this.stripeWidth);
+	}
+	context.restore();
+}
+
+goalAnim.prototype.loop = function() {
+	this.update();
+	this.render( context );
 }
 
 function goalKickAnim() {
@@ -99,30 +99,29 @@ function goalKickAnim() {
 	this.style = "italic 120px bolder fantasy";
 
 	this.removeThis = false;
-	
-	this.complete = function() {
-		this.removeThis = true;
-	}
-
-	this.update = function() {
-		this.posY += this.velY;
-	}
-
-	this.render = function( context ) {
-		context.font = this.style;
-		context.strokeStyle = 'white';
-		context.lineWidth = 15;
-		context.strokeText( this.string, this.posX, this.posY );
-		context.fillStyle = 'blue';
-		context.fillText( this.string, this.posX, this.posY );
-
-		context.fillRect( 0, this.posY + 60, canvas.width, canvas.height * 3);
-	}
-
-	this.loop = function() {
-		this.update();
-		this.render( context );
-	}
 }
 
+goalKickAnim.prototype.complete = function() {
+	this.removeThis = true;
+}
+
+goalKickAnim.prototype.update = function() {
+	this.posY += this.velY;
+}
+
+goalKickAnim.prototype.render = function( context ) {
+	context.font = this.style;
+	context.strokeStyle = 'white';
+	context.lineWidth = 15;
+	context.strokeText( this.string, this.posX, this.posY );
+	context.fillStyle = 'blue';
+	context.fillText( this.string, this.posX, this.posY );
+
+	context.fillRect( 0, this.posY + 60, canvas.width, canvas.height * 3);
+}
+
+goalKickAnim.prototype.loop = function() {
+	this.update();
+	this.render( context );
+}
 

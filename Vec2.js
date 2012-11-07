@@ -1,83 +1,83 @@
-vec2 = function(x, y) {
+Vec2 = function(x, y) {
 	this.x = x;
 	this.y = y;
-
-	this.zero = function() {
-		this.x = 0;
-		this.y = 0;
-	}
-
-	this.dot = function(v) {
-		return this.x * v.x + this.y * v.y;
-	}
-
-	this.set = function(v) {
-		this.x = v.x;
-		this.y = v.y;
-
-		return this;
-	}
-
-	this.copy = function() {
-		return new vec2(this.x, this.y);
-	}
-
-	this.add = function(v) {
-		this.x += v.x;
-		this.y += v.y;
-	
-		return this;
-	}
-
-	this.plus = function(v) {
-		return new vec2(this.x + v.x, this.y + v.y);
-	}
-
-	this.sub = function(v) {
-		this.x -= v.x;
-		this.y -= v.y;
-
-		return this;
-	}
-
-	this.minus = function(v) {
-		return new vec2(this.x - v.x, this.y - v.y);
-	}
-
-	this.scale = function(s) {
-		this.x *= s;
-		this.y *= s;
-
-		return this;
-	}
-
-	this.times = function(s) {
-		return new vec2(this.x * s, this.y * s);
-	}
-
-	this.flip = function() {
-		return this.scale(-1);
-	}
-
-	this.length = function() {
-		return Math.sqrt(this.x * this.x + this.y * this.y);
-	}
-
-	this.normalize = function() {
-		if (this.length() == 0.0) return this;
-
-		return this.scale(1.0 / this.length());
-	}
-
-	this.rotate = function(a) {
-		var x = this.x;
-		var y = this.y;
-
-		this.x = x * Math.cos(a) - y * Math.sin(a);
-		this.y = x * Math.sin(a) + y * Math.cos(a);
-
-		return this;
-	}
 }
 
-module.exports = vec2;
+Vec2.prototype.zero = function() {
+	this.x = 0;
+	this.y = 0;
+}
+
+Vec2.prototype.dot = function(v) {
+	return this.x * v.x + this.y * v.y;
+}
+
+Vec2.prototype.set = function(v) {
+	this.x = v.x;
+	this.y = v.y;
+
+	return this;
+}
+
+Vec2.prototype.copy = function() {
+	return new Vec2(this.x, this.y);
+}
+
+Vec2.prototype.add = function(v) {
+	this.x += v.x;
+	this.y += v.y;
+
+	return this;
+}
+
+Vec2.prototype.plus = function(v) {
+	return new Vec2(this.x + v.x, this.y + v.y);
+}
+
+Vec2.prototype.sub = function(v) {
+	this.x -= v.x;
+	this.y -= v.y;
+
+	return this;
+}
+
+Vec2.prototype.minus = function(v) {
+	return new Vec2(this.x - v.x, this.y - v.y);
+}
+
+Vec2.prototype.scale = function(s) {
+	this.x *= s;
+	this.y *= s;
+
+	return this;
+}
+
+Vec2.prototype.times = function(s) {
+	return new Vec2(this.x * s, this.y * s);
+}
+
+Vec2.prototype.flip = function() {
+	return this.scale(-1);
+}
+
+Vec2.prototype.length = function() {
+	return Math.sqrt(this.x * this.x + this.y * this.y);
+}
+
+Vec2.prototype.normalize = function() {
+	if (this.length() == 0.0) return this;
+
+	return this.scale(1.0 / this.length());
+}
+
+Vec2.prototype.rotate = function(a) {
+	var x = this.x;
+	var y = this.y;
+
+	this.x = x * Math.cos(a) - y * Math.sin(a);
+	this.y = x * Math.sin(a) + y * Math.cos(a);
+
+	return this;
+}
+
+module.exports = Vec2;

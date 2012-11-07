@@ -1,8 +1,8 @@
-var team = require('./team.js');
+var team = require('./Team.js');
 var discrete = require('./discrete.js');
 var objects = require('./object.js');
-var event = require('./event.js');
-var field = require('./field.js');
+var event = require('./Event.js');
+var Field = require('./Field.js');
 
 /*
 	Game state
@@ -31,7 +31,7 @@ var game = function(team1, team2, players) {
 	this.team1 = team1;
 	this.team2 = team2;
 	this.players = players;
-	this.gamefield = new field();
+	this.gamefield = new Field();
 
 	// Queue of packets to be sent
 	this.packetQueue = [];
@@ -70,7 +70,7 @@ var game = function(team1, team2, players) {
 
 	for (r = 0; r < vPlayers; r++) {
 		for (c = 0; c < hPlayers; c++) {
-			var player = new objects.gameObject(new Vec2(fieldL + (c + 1) * fieldW / (hPlayers + 2), fieldT + (r + 1) * fieldH / (vPlayers + 2)), new Vec2(0, 0), objects.type.player, (c < hPlayers / 2) ? 'left' : 'right' );
+			var player = new objects.Entity(new Vec2(fieldL + (c + 1) * fieldW / (hPlayers + 2), fieldT + (r + 1) * fieldH / (vPlayers + 2)), new Vec2(0, 0), objects.type.player, (c < hPlayers / 2) ? 'left' : 'right' );
 			player.enableAuto();
 			player.setAnchor(player.pos, objects.dims.fieldWidth / 4);
 
@@ -95,7 +95,7 @@ var game = function(team1, team2, players) {
 	this.ballHolder = null;
 
 	// The ball
-	this.ball = new objects.gameObject(new Vec2(objects.dims.fieldLength / 2 - objects.type.ball.width / 2, objects.dims.fieldWidth / 2 - objects.type.ball.height / 2), new Vec2(0, 0), objects.type.ball);
+	this.ball = new objects.Entity(new Vec2(objects.dims.fieldLength / 2 - objects.type.ball.width / 2, objects.dims.fieldWidth / 2 - objects.type.ball.height / 2), new Vec2(0, 0), objects.type.ball);
 
 	this.stopGame = function(e) {
 		this.data.stopped = true;

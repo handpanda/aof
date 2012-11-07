@@ -8,9 +8,9 @@ var Vec2 = require('./Vec2.js');
 
 var objects = require('./object.js');
 var discrete = require('./discrete.js');
-var team = require('./team.js');
-var field = require('./field.js');
-var event = require('./event.js');
+var team = require('./Team.js');
+var field = require('./Field.js');
+var event = require('./Event.js');
 var game = require('./game.js');
 var lobby = require('./lobby.js');
 
@@ -113,7 +113,7 @@ sio.sockets.on('connection', function(client) {
 		console.log(msg + 'succeeded');
 		client.emit('joinstatus', { succeed: true, gameId: data, reason: '' });
 
-		var player = new objects.gameObject(new Vec2(0, 0), new Vec2(0, 0), objects.type.player, clientnum % 2 ? 'left' : 'right');
+		var player = new objects.Entity(new Vec2(0, 0), new Vec2(0, 0), objects.type.player, clientnum % 2 ? 'left' : 'right');
 
 		//player.id = clientnum;
 

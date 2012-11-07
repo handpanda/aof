@@ -7,10 +7,10 @@
 var Team = function(name, side) {
 	this.name = name;
 	this.side = side;
+}
 
-	this.log = function() {
-		console.log('Team: ' + this.name + ', ' + this.side);
-	}
+Team.prototype.log = function() {
+	console.log('Team: ' + this.name + ', ' + this.side);
 }
 
 var names = [ 'Chinese', 'Romans', 'Aztecs', 'Vikings', 'Mongols', 'Cossacks' ]; 

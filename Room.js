@@ -3,14 +3,13 @@ var Room = function(pos, width, height) {
 	this.pos = pos;
 	this.width = width;
 	this.height = height;
-
+}
 	
-	// Update with data from the server
-	this.grab = function(data) {
-		this.pos = data.pos;
-		this.width = data.width;
-		this.height = data.height;
-	}
+// Update with data from the server
+Room.prototype.grab = function(data) {
+	this.pos = data.pos;
+	this.width = data.width;
+	this.height = data.height;
 }
 
-module.exports.Room = Room;
+module.exports = Room;
