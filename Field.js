@@ -1,5 +1,5 @@
 var objects = require('./object.js');
-var event = require('./Event.js');
+var Event = require('./Event.js');
 var Room = require('./Room.js');
 
 /*
@@ -72,13 +72,13 @@ Field.prototype.interact = function(ball) {
 	if (ball.overlaps(this.leftGoal)) {
 		ball.vel.zero();
 		ball.pos.set(new Vec2(this.grass.width / 2 - ball.width / 2, this.grass.height / 2 - ball.height / 2));
-		return new Event.Event('right', event.type.GOAL);
+		return new Event.Event('right', Event.type.GOAL);
 	}
 
 	if (ball.overlaps(this.rightGoal)) {
 		ball.vel.zero();
 		ball.pos.set(new Vec2(this.grass.width / 2 - ball.width / 2, this.grass.height / 2 - ball.height / 2));
-		return new Event.Event('left', event.type.GOAL);
+		return new Event.Event('left', Event.type.GOAL);
 	}
 
 	if (ball.overlaps(this.leftBackline)) {
@@ -89,19 +89,19 @@ Field.prototype.interact = function(ball) {
 			ball.vel.zero();
 			ball.pos.set(this.leftGoalieBox.pos.plus(new Vec2(this.leftGoalieBox.width - ball.width / 2, this.leftGoalieBox.height - ball.height / 2)));			
 		}
-		return new Event.Event('', event.type.GOALKICK);
+		return new Event.Event('', Event.type.GOALKICK);
 	}
 
 	if (ball.overlaps(this.topSideline)) {
 		ball.vel.zero();
 		ball.pos.set(new Vec2(ball.pos.x, this.topSideline.pos.y + this.topSideline.height));
-		return new Event.Event('', event.type.THROWIN);
+		return new Event.Event('', Event.type.THROWIN);
 	}
 
 	if (ball.overlaps(this.bottomSideline)) {
 		ball.vel.zero();
 		ball.pos.set(new Vec2(ball.pos.x, this.bottomSideline.pos.y - ball.height));
-		return new Event.Event('', event.type.THROWIN);
+		return new Event.Event('', Event.type.THROWIN);
 	}
 
 	if (ball.overlaps(this.rightBackline)) {
@@ -112,7 +112,7 @@ Field.prototype.interact = function(ball) {
 			ball.vel.zero();
 			ball.pos.set(this.rightGoalieBox.pos.plus(new Vec2(-ball.width / 2, this.rightGoalieBox.height - ball.height / 2)));			
 		}
-		return new Event.Event('', event.type.GOALKICK);
+		return new Event.Event('', Event.type.GOALKICK);
 	}
 }
 

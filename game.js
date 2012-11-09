@@ -3,6 +3,7 @@ var discrete = require('./discrete.js');
 var objects = require('./object.js');
 var event = require('./Event.js');
 var Field = require('./Field.js');
+var Ball = require('./Ball.js');
 
 /*
 	Game state
@@ -95,7 +96,7 @@ var game = function(team1, team2, players) {
 	this.ballHolder = null;
 
 	// The ball
-	this.ball = new objects.Entity(new Vec2(objects.dims.fieldLength / 2 - objects.type.ball.width / 2, objects.dims.fieldWidth / 2 - objects.type.ball.height / 2), new Vec2(0, 0), objects.type.ball);
+	this.ball = new Ball(new Vec2(objects.dims.fieldLength / 2 - objects.type.ball.width / 2, objects.dims.fieldWidth / 2 - objects.type.ball.height / 2), new Vec2(0, 0), objects.type.ball);
 
 	this.stopGame = function(e) {
 		this.data.stopped = true;

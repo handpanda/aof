@@ -119,10 +119,12 @@ var idstat = 0;
 	One of the objects in the game - ball, player, field region
 */
 var Entity = function(pos, offset, objtype, side) {
-	this.type = 	objtype;
-	this.pos = 	pos;
-	this.vel = 	new Vec2(0, 0);
-	this.offset = 	offset;
+	this.type = type.ball;
+	if ( objtype !== undefined ) this.type = 	objtype;
+	this.pos = new Vec2( 0, 0 );
+	if ( pos !== undefined ) this.pos = 	pos;
+	this.offset = new Vec2( 0, 0 );
+	if ( offset !== undefined ) this.offset = 	offset;
 	this.width =	this.type.width;
 	this.height = 	this.type.height;
 	this.id = 	idstat++;
@@ -133,6 +135,7 @@ var Entity = function(pos, offset, objtype, side) {
 	this.centerToPos = this.center.minus(this.pos);
 	this.facedir = 	new Vec2(Math.cos(this.angle), Math.sin(this.angle));
 	this.action  = 	ACT.STAND;
+	this.vel = 	new Vec2(0, 0);
 	this.strafing = false;
 	this.speed = 	0;
 	this.topSpeed = 0;
@@ -145,6 +148,36 @@ var Entity = function(pos, offset, objtype, side) {
 	this.isAuto = false;
 	this.anchor = this.pos.copy();
 	this.radius = 0;
+
+
+// Initialize the player
+switch (this.type) {
+	case type.player:
+		this.topSpeed = 8;
+		this.class = CLASS.MIDFIELDER;
+
+		this.attemptAction = function(action) {
+			if (!ACT.canTransfer(this.action, action)) return;
+
+			switch (action) {
+				case ACT.KICK:	
+					// Kick		
+					this.action = ACT.KICK;
+					break;					
+				case ACT.SLIDE:
+					// Slide Tackle
+					this.action = ACT.SLIDE;
+					this.vel.add(this.facedir.times(15));
+					break;
+				case ACT.PUNT:
+					// Punt
+					this.action = ACT.PUNT;
+					break;
+			}
+		}
+		break;
+}
+
 }
 
 // Player kick function (Unused)
@@ -198,34 +231,6 @@ Entity.prototype.goToward = function(pos) {
 
 		if (absSpeed > this.topSpeed) this.vel.scale(this.topSpeed / absSpeed);
 	}
-}
-
-// Initialize the player
-switch (this.type) {
-	case type.player:
-		this.topSpeed = 8;
-		this.class = CLASS.MIDFIELDER;
-
-		this.attemptAction = function(action) {
-			if (!ACT.canTransfer(this.action, action)) return;
-
-			switch (action) {
-				case ACT.KICK:	
-					// Kick		
-					this.action = ACT.KICK;
-					break;					
-				case ACT.SLIDE:
-					// Slide Tackle
-					this.action = ACT.SLIDE;
-					this.vel.add(this.facedir.times(15));
-					break;
-				case ACT.PUNT:
-					// Punt
-					this.action = ACT.PUNT;
-					break;
-			}
-		}
-		break;
 }
 
 // Draw the object
@@ -401,24 +406,6 @@ Entity.prototype.overlaps = function(otherObject) {
 	}	
 
 	return false;			
-}
-
-// Bounce off some other object (used by the ball only)
-Entity.prototype.bounce = function(otherObject) {
-	if (this.overlaps(otherObject)) {
-		if (this.pos.x > otherObject.pos.x + otherObject.width) {
-			if (this.vel.x < 0) this.vel.x *= -1;
-		}
-		if (this.pos.x + this.width < otherObject.pos.x) {
-			if (this.vel.x > 0) this.vel.x *= -1;
-		}
-		if (this.pos.y > otherObject.pos.y + otherObject.height) {
-			if (this.vel.y < 0) this.vel.y *= -1;
-		}
-		if (this.pos.y + this.height < otherObject.pos.y) {
-			if (this.vel.y > 0) this.vel.y *= -1;
-		}
-	}	
 }
 
 module.exports.kickState = kickState;

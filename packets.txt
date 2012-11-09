@@ -1,0 +1,39 @@
+==========================
+Age of Football -- Packets
+==========================
+
+Format: packet name - action
+
+==============
+Server Packets
+==============
+
+list - return a list of currently active games
+addgame - add a game
+join - join some game
+leave - leave the game you're in
+message - get username or broadcast message
+ready - tell client to start game loop
+input - update the client's player
+polo - update the client's ping
+
+==============
+Client Packets
+==============
+
+message - add a message to the conversation
+playerid - update player id
+clientid - update client id
+joinstatus - enter the game you want to join, or not
+currentRoom - update current room
+listentry - add entry to the list of active games
+ready - start game
+marco - respond to ping request
+
+(In the current game...) 
+player - create/update a player
+kill - remove a player
+zone - create/update a zone
+team - create/update a team
+ball - create/update the ball
+gameData - update the time and score
