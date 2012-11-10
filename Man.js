@@ -1,4 +1,6 @@
-objects = require("./object.js");
+var Entity = require("./Entity.js");
+var ACT = require("./Act.js");
+var type = require("./type.js");
 
 // Kinds of players, will be used for AI (UNIMPLEMENTED)
 var CLASS = {
@@ -8,14 +10,28 @@ var CLASS = {
 	STRIKER:    3,
 }
 
-var Man = function(pos, offset, objtype, side) {
-	objects.Entity.call( this, pos, offset, objtype, side );
+/*
+	Stages of a kick (UNIMPLEMENTED)
+*/
+var kickState = {
+	idle: 0,
+	charging: 1,
+	lofting: 2,
+	lofted: 3,
+	kicking: 4,
+}
+
+var Man = function(pos, side) {
+	Entity.call( this, pos, type.player, side );
 	
 	this.topSpeed = 8;
 	this.class = CLASS.MIDFIELDER;
+	
+	this.hasBall = 	false;
+	this.action  = 	ACT.STAND;
 }
 
-Man.prototype = new objects.Entity();
+Man.prototype = new Entity();
 Man.prototype.constructor = Man;
 
 // Player kick function (Unused)
@@ -23,25 +39,25 @@ Man.prototype.kick = {
 	charge: 0.0,
 	power: 0.0,
 	loft: 0.0,	
-	state: objects.kickState.idle,
+	state: kickState.idle,
 }
 
 Man.prototype.attemptAction = function(action) {
-	if (!objects.ACT.canTransfer(this.action, action)) return;
+	if (!ACT.canTransfer(this.action, action)) return;
 
 	switch (action) {
-		case objects.ACT.KICK:	
+		case ACT.KICK:	
 			// Kick		
-			this.action = objects.ACT.KICK;
+			this.action = ACT.KICK;
 			break;					
-		case objects.ACT.SLIDE:
+		case ACT.SLIDE:
 			// Slide Tackle
-			this.action = objects.ACT.SLIDE;
+			this.action = ACT.SLIDE;
 			this.vel.add(this.facedir.times(15));
 			break;
-		case objects.ACT.PUNT:
+		case ACT.PUNT:
 			// Punt
-			this.action = objects.ACT.PUNT;
+			this.action = ACT.PUNT;
 			break;
 	}
 }
@@ -73,7 +89,7 @@ Man.prototype.lookAt = function(pos) {
 
 // Attempt to move toward a point on the field
 Man.prototype.goToward = function(pos) {
-	if (objects.ACT.canAccelerate(this.action)) {
+	if (ACT.canAccelerate(this.action)) {
 		this.vel.set(new Vec2(0, 0));
 
 		if (Math.abs(this.pos.x - pos.x) > this.topSpeed) {

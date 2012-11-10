@@ -4,7 +4,7 @@
 	
 */
 
-// Specifications for objects
+// Specifications for Entity
 var type = {
 	player    : { name: 'player', width: 40  , height: 40, color: 'white' },
 	ball      : { name: 'ball', width: 25  , height: 25, color: 'white' },
@@ -17,81 +17,8 @@ var type = {
 	goalBack  : { name: 'goalBack', width: dims.postWidth, height: dims.goalWidth },
 }
 
-var direction = {
-	none  : 0,//{ x:  0, y:  0 },
-	left  : 1,//{ x: -1, y:  0 },
-	right : 2,//{ x:  1, y:  0 }, 
-	up    : 3,//{ x:  0, y: -1 },
-	down  : 4,//{ x:  0, y:  1 },
-}
-
-var contact = function(dir) {
-	this.dir = dir;
-}
-
 /*
-	Stages of a kick (UNIMPLEMENTED)
-*/
-var kickState = {
-	idle: 0,
-	charging: 1,
-	lofting: 2,
-	lofted: 3,
-	kicking: 4,
-}
-
-/*
-	Player actions and how they are related
-*/	
-var ACT = {
-	STAND: 0,
-	RUN: 1,
-	KICK: 2,
-	SLIDE: 3,
-	PUNT: 4,
-
-	ACTIONS: 5, // Total number of actions
-
-	
-	// Can a player doing action A switch to action B?
-	// from:	STAND	RUN	KICK	SLIDE	PUNT
-	transfer: [	true, 	true, 	true, 	true,	true,  // to:	STAND
-		   	true, 	true, 	true, 	false,  true,  // 	RUN
-		   	true, 	true, 	false, 	false,	false, //	KICK
-		   	true, 	true, 	false, 	false,	false, // 	SLIDE
-			true,	true,	false,  false,  false, //	PUNT
-								],
-
-	canTransfer: function(fromaction, toaction) {
-		return ACT.transfer[fromaction + toaction * ACT.ACTIONS];
-	},
-
-	// Can a player doing some action move freely (i.e with the arrow keys) ?
-	canAccelerate: function(action) {
-		switch (action) {
-		case ACT.STAND:
-		case ACT.RUN:
-		case ACT.KICK:
-			return true;
-		case ACT.SLIDE:
-		case ACT.PUNT:
-			return false;
-		}
-	}
-}
-
-// Kinds of players, will be used for AI (UNIMPLEMENTED)
-var CLASS = {
-	GOALKEEPER: 0,
-	DEFENCEMAN: 1,
-	MIDFIELDER: 2,
-	STRIKER:    3,
-}
-
-var idstat = 0;
-
-/*
-	One of the objects in the game - ball, player, field region
+	One of the Entity in the game - ball, player, field region
 */
 var clientEntity = function(pos, objtype, side) {
 	this.type = type.ball;
@@ -100,8 +27,8 @@ var clientEntity = function(pos, objtype, side) {
 	if ( pos !== undefined ) this.pos = 	pos;
 	this.width =	this.type.width;
 	this.height = 	this.type.height;
-	this.id = 	idstat++;
-	this.clientid = 0;
+	this.id = -1;
+	this.clientid = -1;
 	this.ping = 0;
 	this.angle = 	0.0;
 	this.center =   new Vec2(this.pos.x + this.width / 2, this.pos.y + this.width / 2);

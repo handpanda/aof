@@ -6,13 +6,15 @@ var http = require('http');
 
 var Vec2 = require('./Vec2.js');
 
-var objects = require('./object.js');
+var Entity = require('./Entity.js');
 var discrete = require('./discrete.js');
 var team = require('./Team.js');
 var field = require('./Field.js');
 var event = require('./Event.js');
 var game = require('./game.js');
 var lobby = require('./lobby.js');
+var Man = require('./Man.js');
+var ACT = require('./Act.js');
 
 var KEYSTATE = {
 	UP : 0,
@@ -113,7 +115,7 @@ sio.sockets.on('connection', function(client) {
 		console.log(msg + 'succeeded');
 		client.emit('joinstatus', { succeed: true, gameId: data, reason: '' });
 
-		var player = new objects.Entity(new Vec2(0, 0), new Vec2(0, 0), objects.type.player, clientnum % 2 ? 'left' : 'right');
+		var player = new Man(new Vec2(0, 0), clientnum % 2 ? 'left' : 'right');
 
 		//player.id = clientnum;
 
@@ -190,7 +192,7 @@ sio.sockets.on('connection', function(client) {
 		if (client.player != null) {
 			var doUpdate = false;		
 
-			if (objects.ACT.canAccelerate(client.player.action)) {
+			if (ACT.canAccelerate(client.player.action)) {
 				client.player.vel.zero();
 
 				var playerSpeed = client.player.topSpeed * 1.25;
@@ -224,15 +226,15 @@ sio.sockets.on('connection', function(client) {
 
 			if (data.z == KEYSTATE.HIT) {
 				if (client.player.hasBall) {
-					client.player.attemptAction(objects.ACT.KICK);
+					client.player.attemptAction(ACT.KICK);
 				} else {
-					client.player.attemptAction(objects.ACT.SLIDE);
+					client.player.attemptAction(ACT.SLIDE);
 				}
 			}
 
 			if (data.x == KEYSTATE.HIT) {
 				if (client.player.hasBall) {
-					client.player.attemptAction(objects.ACT.PUNT);
+					client.player.attemptAction(ACT.PUNT);
 				} else { 
 					
 				}

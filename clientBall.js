@@ -1,5 +1,5 @@
-var clientBall = function(pos, objtype, side) {
-	clientEntity.call( this, pos, objtype, side );
+var clientBall = function(pos, side) {
+	clientEntity.call( this, pos, type.ball, side );
 }
 
 clientBall.prototype = new clientEntity();

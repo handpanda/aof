@@ -8,6 +8,18 @@ var keys = {
 	c     : false,
 }
 
+var type = {
+	player    : { name: 'player', width: 40  , height: 40, color: 'white' },
+	ball      : { name: 'ball', width: 25  , height: 25, color: 'white' },
+	field     : { name: 'field', width: dims.fieldLength, height: dims.fieldWidth, color: 'green' },
+	sideline  : { name: 'sideline', width: dims.fieldLength - dims.sidelineWidth / 2, height: dims.sidelineWidth, color: 'blue' },
+	backline  : { name: 'backline', width: dims.backlineWidth, height: dims.fieldWidth, color: 'red' },
+	goal      : { name: 'goal', width: dims.goalDepth , height: dims.goalWidth, color: 'yellow' },
+	goalieBox : { name: 'goalieBox', width: dims.goalieBoxDepth , height: dims.goalieBoxWidth, color: 'purple' },
+	goalSide  : { name: 'goalSide', width: dims.sidelineWidth, height: dims.postWidth },
+	goalBack  : { name: 'goalBack', width: dims.postWidth, height: dims.goalWidth },
+}
+
 var regularImage = function(filename) {
 		this.image = new Image();
 		this.image.src = filename;
@@ -122,7 +134,7 @@ $(document).ready(function() {
 			}
 		}
 		if (!found) {
-			players.push(new Entity(new Vec2(0, 0), new Vec2(0, 0), type.ball));
+			players.push(new clientMan(new Vec2(0, 0)));
 			players[players.length - 1].clientid = data.clientid;
 			players[players.length - 1].id = data.id;
 			players[players.length - 1].grab(data);
@@ -136,7 +148,7 @@ $(document).ready(function() {
 	});
 
 	socket.on('zone', function(data) {
-		zones.push(new Entity(new Vec2(0, 0), new Vec2(0, 0), type.ball));
+		zones.push(new clientZone(new Vec2(0, 0), type.ball));
 		zones[zones.length - 1].grab(data);
 		console.log("zone");
 	});
@@ -208,7 +220,7 @@ $(document).ready(function() {
 	});
 
 	socket.on('ball', function(data) {
-		if (ball == null) ball = new Entity(new Vec2(0, 0), new Vec2(0, 0), type.ball);
+		if (ball == null) ball = new clientBall(new Vec2(0, 0));
 		ball.grab(data);
 	});
 

@@ -1,9 +1,13 @@
 var team = require('./Team.js');
 var discrete = require('./discrete.js');
-var objects = require('./object.js');
+var dims = require('./dims.js');
+var type = require('./type.js');
+var Entity = require('./Entity.js');
 var event = require('./Event.js');
 var Field = require('./Field.js');
 var Ball = require('./Ball.js');
+var Man = require('./Man.js');
+var ACT = require('./Act.js');
 
 /*
 	Game state
@@ -58,12 +62,12 @@ var game = function(team1, team2, players) {
 	}
 
 	// Upper left corner of the field
-	var fieldL = objects.dims.sidelineWidth;
-	var fieldT = objects.dims.sidelineWidth;
+	var fieldL = dims.sidelineWidth;
+	var fieldT = dims.sidelineWidth;
 
 	// Dimensions of the field
-	var fieldW = objects.dims.fieldLength;
-	var fieldH = objects.dims.fieldWidth;
+	var fieldW = dims.fieldLength;
+	var fieldH = dims.fieldWidth;
 
 	// Create AI players for each team
 	var hPlayers = 1;
@@ -71,9 +75,9 @@ var game = function(team1, team2, players) {
 
 	for (r = 0; r < vPlayers; r++) {
 		for (c = 0; c < hPlayers; c++) {
-			var player = new objects.Entity(new Vec2(fieldL + (c + 1) * fieldW / (hPlayers + 2), fieldT + (r + 1) * fieldH / (vPlayers + 2)), new Vec2(0, 0), objects.type.player, (c < hPlayers / 2) ? 'left' : 'right' );
+			var player = new Man(new Vec2(fieldL + (c + 1) * fieldW / (hPlayers + 2), fieldT + (r + 1) * fieldH / (vPlayers + 2)), (c < hPlayers / 2) ? 'left' : 'right' );
 			player.enableAuto();
-			player.setAnchor(player.pos, objects.dims.fieldWidth / 4);
+			player.setAnchor(player.pos, dims.fieldWidth / 4);
 
 			this.players.push(player);
 		}	
@@ -96,7 +100,7 @@ var game = function(team1, team2, players) {
 	this.ballHolder = null;
 
 	// The ball
-	this.ball = new Ball(new Vec2(objects.dims.fieldLength / 2 - objects.type.ball.width / 2, objects.dims.fieldWidth / 2 - objects.type.ball.height / 2), new Vec2(0, 0), objects.type.ball);
+	this.ball = new Ball(new Vec2(dims.fieldLength / 2 - type.ball.width / 2, dims.fieldWidth / 2 - type.ball.height / 2));
 
 	this.stopGame = function(e) {
 		this.data.stopped = true;
@@ -186,13 +190,13 @@ var game = function(team1, team2, players) {
 
 						} else {
 							// If the player has the ball and is near the goal, take a shot
-							player.attemptAction(objects.ACT.KICK);
+							player.attemptAction(ACT.KICK);
 						}	
 					} else {
 						if (!(this.ballHolder != null && this.ballHolder.side == player.side)) {
 							if (distToBall < 50) {
 								// If the player is near the ball and his side does not control it, slide tackle toward it
-								if (!(this.ballHolder != null && this.ballHolder.side == player.side)) player.attemptAction(objects.ACT.SLIDE);
+								if (!(this.ballHolder != null && this.ballHolder.side == player.side)) player.attemptAction(ACT.SLIDE);
 							} else {
 
 							}
@@ -235,7 +239,7 @@ var game = function(team1, team2, players) {
 
 				if (speed > pf && !player.strafing) player.updateAngle();
 
-				if (speed < pf && player.action == objects.ACT.SLIDE) player.action = objects.ACT.STAND;
+				if (speed < pf && player.action == ACT.SLIDE) player.action = ACT.STAND;
 
 				if (speed > pf) player.vel.add( friction );
 				else player.vel.zero();
@@ -301,16 +305,16 @@ var game = function(team1, team2, players) {
 		if (this.ballHolder != null) {
 		
 			// Kick the ball
-			if (this.ballHolder.action == objects.ACT.KICK) {
-				this.ballHolder.action = objects.ACT.STAND;
+			if (this.ballHolder.action == ACT.KICK) {
+				this.ballHolder.action = ACT.STAND;
 				this.ballHolder.hasBall = false;
 				this.ball.vel.set(this.ballHolder.facedir.times(25));
 				//this.ball.velZ = 0;
 				this.ballHolder = null;
 
 			// Punt the ball
-			} else if (this.ballHolder.action == objects.ACT.PUNT) {
-				this.ballHolder.action = objects.ACT.STAND;
+			} else if (this.ballHolder.action == ACT.PUNT) {
+				this.ballHolder.action = ACT.STAND;
 				this.ballHolder.hasBall = false;
 				this.ball.vel.set(this.ballHolder.facedir.times(20));
 				this.ball.velZ = -0.1;
@@ -322,7 +326,7 @@ var game = function(team1, team2, players) {
 		for (p in this.players) {
 			var player = this.players[p];
 
-			if (player.action == objects.ACT.SLIDE && player.overlaps(this.ball)) {
+			if (player.action == ACT.SLIDE && player.overlaps(this.ball)) {
 				if (this.ballHolder != null) this.ballHolder.hasBall = false;
 				this.ballHolder = player;
 				player.hasBall = true;

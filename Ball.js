@@ -1,10 +1,11 @@
-var objects = require('./object.js');
+var Entity = require('./Entity.js');
+var type = require("./type.js");
 
-var Ball = function(pos, offset, objtype, side) {
-	objects.Entity.call( this, pos, offset, objtype, side );
+var Ball = function(pos, objtype, side) {
+	Entity.call( this, pos, type.Ball, side );
 }
 
-Ball.prototype = new objects.Entity();
+Ball.prototype = new Entity();
 Ball.prototype.constructor = Ball;
 
 // Bounce off some other object

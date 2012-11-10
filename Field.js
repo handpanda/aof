@@ -1,29 +1,32 @@
-var objects = require('./object.js');
+var Entity = require('./Entity.js');
+var Zone = require('./Zone.js');
+var dims = require("./dims.js");
 var Event = require('./Event.js');
 var Room = require('./Room.js');
+var type = require("./type.js");
 
 /*
 	Game field
 */
 
 var Field = function() {
-	this.room = new Room(new Vec2(0, 0), objects.dims.fieldLength, objects.dims.fieldWidth);
+	this.room = new Room(new Vec2(0, 0), dims.fieldLength, dims.fieldWidth);
 	
 	// Set up field zones
-	var A = objects.dims.fieldLength;
-	var B = objects.dims.fieldWidth;
-	var C = objects.dims.backlineWidth;
-	var D = objects.dims.sidelineWidth;
+	var A = dims.fieldLength;
+	var B = dims.fieldWidth;
+	var C = dims.backlineWidth;
+	var D = dims.sidelineWidth;
 
-	this.grass = 		new objects.Entity(new Vec2(0, 0), new Vec2(0, 0), objects.type.field, 'none');
-	this.topSideline = 	new objects.Entity(new Vec2(C, 0), new Vec2(0, 0), objects.type.sideline, 'top');
-	this.leftBackline = 	new objects.Entity(new Vec2(0, 0), new Vec2(0, 0), objects.type.backline, 'left');
-	this.leftGoal = 	new objects.Entity(new Vec2(C - objects.dims.goalDepth, B / 2 - objects.dims.goalWidth / 2), new Vec2(0, 0), objects.type.goal, 'left');
-	this.leftGoalieBox = 	new objects.Entity(new Vec2(C, B / 2 - objects.dims.goalieBoxWidth / 2), new Vec2(0, 0), objects.type.goalieBox, 'left');
-	this.rightBackline = 	new objects.Entity(new Vec2(A - C, 0), new Vec2(0, 0), objects.type.backline, 'right');
-	this.rightGoal = 	new objects.Entity(new Vec2(A - C, B / 2 - objects.dims.goalWidth / 2), new Vec2(0, 0), objects.type.goal, 'right');
-	this.rightGoalieBox = 	new objects.Entity(new Vec2(A - C - objects.dims.goalieBoxDepth, B / 2 - objects.dims.goalieBoxWidth / 2), new Vec2(0, 0), objects.type.goalieBox, 'right');
-	this.bottomSideline = 	new objects.Entity(new Vec2(C, B - D), new Vec2(0, 0), objects.type.sideline, 'right');	
+	this.grass = 		new Zone(new Vec2(0, 0), type.field, 'none');
+	this.topSideline = 	new Zone(new Vec2(C, 0), type.sideline, 'top');
+	this.leftBackline = 	new Zone(new Vec2(0, 0), type.backline, 'left');
+	this.leftGoal = 	new Zone(new Vec2(C - dims.goalDepth, B / 2 - dims.goalWidth / 2), type.goal, 'left');
+	this.leftGoalieBox = 	new Zone(new Vec2(C, B / 2 - dims.goalieBoxWidth / 2), type.goalieBox, 'left');
+	this.rightBackline = 	new Zone(new Vec2(A - C, 0), type.backline, 'right');
+	this.rightGoal = 	new Zone(new Vec2(A - C, B / 2 - dims.goalWidth / 2), type.goal, 'right');
+	this.rightGoalieBox = 	new Zone(new Vec2(A - C - dims.goalieBoxDepth, B / 2 - dims.goalieBoxWidth / 2), type.goalieBox, 'right');
+	this.bottomSideline = 	new Zone(new Vec2(C, B - D), type.sideline, 'right');	
 
 	this.zones = [];
 
@@ -41,24 +44,24 @@ var Field = function() {
 	this.barriers = [];
 
 	// Left side goalposts
-	this.barriers.push(new objects.Entity(new Vec2(C - objects.dims.goalDepth, B / 2 - objects.dims.goalWidth / 2 - objects.dims.postWidth / 2), new Vec2(0, 0), objects.type.goalSide));
-	this.barriers.push(new objects.Entity(new Vec2(C - objects.dims.goalDepth, B / 2 - objects.dims.goalWidth / 2), new Vec2(0, 0), objects.type.goalBack));
-	this.barriers.push(new objects.Entity(new Vec2(C - objects.dims.goalDepth, B / 2 + objects.dims.goalWidth / 2 - objects.dims.postWidth / 2), new Vec2(0, 0), objects.type.goalSide));
+	this.barriers.push(new Entity(new Vec2(C - dims.goalDepth, B / 2 - dims.goalWidth / 2 - dims.postWidth / 2), new Vec2(0, 0), type.goalSide));
+	this.barriers.push(new Entity(new Vec2(C - dims.goalDepth, B / 2 - dims.goalWidth / 2), new Vec2(0, 0), type.goalBack));
+	this.barriers.push(new Entity(new Vec2(C - dims.goalDepth, B / 2 + dims.goalWidth / 2 - dims.postWidth / 2), new Vec2(0, 0), type.goalSide));
 
 	// Right side goalposts
-	this.barriers.push(new objects.Entity(new Vec2(A - C, B / 2 - objects.dims.goalWidth / 2 - objects.dims.postWidth / 2), new Vec2(0, 0), objects.type.goalSide));
-	this.barriers.push(new objects.Entity(new Vec2(A - C + objects.dims.goalDepth, B / 2 - objects.dims.goalWidth / 2), new Vec2(0, 0), objects.type.goalBack));
-	this.barriers.push(new objects.Entity(new Vec2(A - C, B / 2 + objects.dims.goalWidth / 2 - objects.dims.postWidth / 2), new Vec2(0, 0), objects.type.goalSide));
+	this.barriers.push(new Entity(new Vec2(A - C, B / 2 - dims.goalWidth / 2 - dims.postWidth / 2), new Vec2(0, 0), type.goalSide));
+	this.barriers.push(new Entity(new Vec2(A - C + dims.goalDepth, B / 2 - dims.goalWidth / 2), new Vec2(0, 0), type.goalBack));
+	this.barriers.push(new Entity(new Vec2(A - C, B / 2 + dims.goalWidth / 2 - dims.postWidth / 2), new Vec2(0, 0), type.goalSide));
 }
 
 // Initial position for a player
 Field.prototype.newPlayerPosition = function(player) {
 	switch (player.side) {
 		case 'left':
-			player.pos.set(new Vec2(objects.dims.sidelineWidth + objects.dims.goalieBoxDepth, objects.dims.fieldWidth / 2));
+			player.pos.set(new Vec2(dims.sidelineWidth + dims.goalieBoxDepth, dims.fieldWidth / 2));
 			break;	
 		case 'right':
-			player.pos.set(new Vec2(objects.dims.fieldLength - (objects.dims.sidelineWidth + objects.dims.goalieBoxDepth), objects.dims.fieldWidth / 2));
+			player.pos.set(new Vec2(dims.fieldLength - (dims.sidelineWidth + dims.goalieBoxDepth), dims.fieldWidth / 2));
 			break;
 	}		
 }

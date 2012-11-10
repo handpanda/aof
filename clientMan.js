@@ -1,5 +1,5 @@
-var clientMan = function(pos, objtype, side) {
-	clientEntity.call( this, pos, objtype, side );
+var clientMan = function(pos, side) {
+	clientEntity.call( this, pos, type.player, side );
 	
 	this.hasBall = 	false;
 }
