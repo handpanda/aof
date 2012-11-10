@@ -289,6 +289,7 @@ function update() {
 
 		// If the client is in a game, calculate their latency (resets to 0 when the player pings back)
 		if (client.game != null) client.ping++;
+		if (client.player != null) client.player.ping = client.ping;
 	}
 
 
