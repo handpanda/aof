@@ -1,4 +1,4 @@
-var game = require('./game.js');
+var Game = require('./Game.js');
 var team = require('./Team.js');
 var discrete = require('./discrete.js');
 
@@ -12,7 +12,12 @@ var lobby = function() {
 
 // Make new game between two specific teams
 lobby.prototype.addGame = function(team1Name, team2Name) {
-	this.games.push(new game.game(new team.Team(team1Name, 'left'), new team.Team(team2Name, 'right'), []));
+	var game = new Game(new team.Team(team1Name, 'left'), new team.Team(team2Name, 'right'), []);
+	
+	this.games.push( game );
+	console.log('lobby: ' + 'added game ' + game.id + ': ' + team1Name + ' v ' + team2Name );
+	
+	return game.id;
 }
 	
 // Make a new game between two random teams

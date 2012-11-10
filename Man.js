@@ -24,7 +24,9 @@ var kickState = {
 var Man = function(pos, side) {
 	Entity.call( this, pos, type.player, side );
 	
-	this.topSpeed = 8;
+	this.speed = 0;
+	this.runSpeed = 8;
+	this.topSpeed = 0;
 	this.class = CLASS.MIDFIELDER;
 	
 	this.hasBall = 	false;
@@ -74,6 +76,66 @@ Man.prototype.disableAuto = function() {
 	this.isAuto = false;
 }
 
+Man.prototype.anticipateInput = function() {
+	this.vel.zero();
+	this.strafing = false;
+}
+
+Man.prototype.calcSpeed = function() {
+	this.topSpeed = this.runSpeed;
+	if ( this.strafing ) this.topSpeed *= 0.75;
+	this.speed = this.topSpeed;
+}
+
+Man.prototype.moveLeft = function() {
+	this.vel.x = -this.speed;
+}
+
+Man.prototype.moveRight = function() {
+	this.vel.x = this.speed;
+}
+
+Man.prototype.moveDown = function() {
+	this.vel.y = this.speed;
+}
+
+Man.prototype.moveUp = function() {
+	this.vel.y = -this.speed;
+}
+
+Man.prototype.enforceTopSpeed = function() {
+	var speed = client.player.vel.length();
+
+	if ( speed > this.topSpeed ) client.player.vel.scale(this.topSpeed / speed);
+}
+
+Man.prototype.inputZ = function( hit ) {
+	if ( hit ) {
+		if (this.hasBall) {
+			this.attemptAction(ACT.KICK);
+		} else {
+			this.attemptAction(ACT.SLIDE);
+		}
+	} else {
+
+	}
+}
+
+Man.prototype.inputX = function( hit ) {
+	if ( hit ) {
+		if (this.hasBall) {
+			this.attemptAction(ACT.PUNT);
+		} else { 
+			
+		}
+	} else {
+		
+	}
+}
+
+Man.prototype.inputC = function( hit ) {
+	this.strafing = true;
+}
 // Set the "home" position for a player
 Man.prototype.setAnchor = function(anchor, radius) {
 	this.anchor.set(anchor);

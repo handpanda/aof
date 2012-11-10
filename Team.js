@@ -9,10 +9,6 @@ var Team = function(name, side) {
 	this.side = side;
 }
 
-Team.prototype.log = function() {
-	console.log('Team: ' + this.name + ', ' + this.side);
-}
-
 var names = [ 'Chinese', 'Romans', 'Aztecs', 'Vikings', 'Mongols', 'Cossacks' ]; 
 
 module.exports.Team = Team;

@@ -11,7 +11,6 @@ var discrete = require('./discrete.js');
 var team = require('./Team.js');
 var field = require('./Field.js');
 var event = require('./Event.js');
-var game = require('./game.js');
 var lobby = require('./lobby.js');
 var Man = require('./Man.js');
 var ACT = require('./Act.js');
@@ -84,18 +83,21 @@ sio.sockets.on('connection', function(client) {
 	console.log('Client joined from ' + client.handshake.address.address + ":" + client.handshake.address.port + " (" + client.ident + ")");
 
 	client.on('list', function(data) {
+		console.log('/list/: ' + 'Client ' + client.ident + ' requested game list' );
+		
 		for (g in menu.games) {
 			client.emit('listentry', menu.games[g].getClientData());
 		} 
 	});
 
 	client.on('addgame', function(data) {
-		console.log('Add Game: ' + data.team1 + ' v ' + data.team2);
-		menu.addGame(data.team1, data.team2);
+		console.log('/addgame/: ' + 'Client ' + client.ident + ' requested to add game: ' + data.team1 + ' v ' + data.team2 );		
+		
+		var id = menu.addGame( data.team1, data.team2 );
 	});
 
 	client.on('join', function(data) {
-		var msg = 'Client ' + client.ident + ' attempted to join game ' + data + '...';
+		var msg = '/join/: ' + 'Client ' + client.ident + ' attempted to join game ' + data + '...';
 
 		client.game = null;
 
@@ -107,7 +109,7 @@ sio.sockets.on('connection', function(client) {
 		}
 		
 		if (client.game == null) {
-			console.log(msg + 'failed');
+			console.log(msg + 'failed (No game matched id)');
 			client.emit('joinstatus', { succeed: false, gameId: data, reason: 'No game matched id' });
 			return;
 		}
@@ -155,24 +157,28 @@ sio.sockets.on('connection', function(client) {
 	});
 
 	client.on('leave', function(data) {
-		var msg = 'Client ' + client.ident + ' attempted to leave game ' + data + '...';
-				
 		if (client.game == null) {
-			console.log(msg + 'no such game');
+			console.log('/leave/: ' + ' Client ' + client.ident + ' is not in any game');
 			return;
+		}		
+		
+		var msg = '/leave/: ' + 'Client ' + client.ident + ' attempted to leave game ' + client.game.id + '...';
+
+		if ( true ) {
+			console.log(msg + 'succeeded');
+			client.game.removePlayer(client.player);
+	
+			client.ping = 0;
+			client.game = null;
+	
+			client.broadcast.emit('kill', client.playerid);
+		} else {
+			console.log(msg + 'failed');
 		}
-
-		console.log(msg + 'succeeded');
-		client.game.removePlayer(client.player);
-
-		client.ping = 0;
-		client.game = null;
-
-		client.broadcast.emit('kill', client.playerid);
 	});
 
 	client.on('message', function(data) {
-		console.log(data);
+		console.log('/message/: ' + data);
 
 		if (!username) {
 			username = data;
@@ -185,6 +191,8 @@ sio.sockets.on('connection', function(client) {
 	});
 
 	client.on('ready', function(data) {
+		console.log('/ready/: ' + 'Client ' + client.ident + ' has joined' );
+		
 		client.emit('ready', null);
 	});
 
@@ -192,64 +200,21 @@ sio.sockets.on('connection', function(client) {
 		if (client.player != null) {
 			var doUpdate = false;		
 
-			if (ACT.canAccelerate(client.player.action)) {
-				client.player.vel.zero();
-
-				var playerSpeed = client.player.topSpeed * 1.25;
-				if (client.player.strafing) playerSpeed *= 0.75;
-			
-				if (data.left) {
-					client.player.vel.x -= playerSpeed;
-					doUpdate = true;
-				}
-
-				if (data.up) {
-					client.player.vel.y -= playerSpeed;
-					doUpdate = true;
-				}
-
-				if (data.right) {
-					client.player.vel.x += playerSpeed;
-					doUpdate = true;
-				}
-
-				if (data.down) {
-					client.player.vel.y += playerSpeed;
-					doUpdate = true;
-				}
-				var speed = client.player.vel.length();
-	
-				if (speed > playerSpeed) client.player.vel.scale(playerSpeed / speed);
-			}
-
-			var speed = client.player.vel.length()
-
-			if (data.z == KEYSTATE.HIT) {
-				if (client.player.hasBall) {
-					client.player.attemptAction(ACT.KICK);
-				} else {
-					client.player.attemptAction(ACT.SLIDE);
-				}
-			}
-
-			if (data.x == KEYSTATE.HIT) {
-				if (client.player.hasBall) {
-					client.player.attemptAction(ACT.PUNT);
-				} else { 
-					
-				}
-			}
-
 			client.player.strafing = false;
-			if (data.c) {
-				client.player.strafing = true;
+			if (ACT.canAccelerate(client.player.action)) {
+				client.player.anticipateInput();
+				if (data.x == KEYSTATE.HIT) client.player.inputX(true);
+				client.player.calcSpeed();
+				
+				if (data.left) client.player.moveLeft();
+				if (data.up) client.player.moveUp();
+				if (data.right) client.player.moveRight();
+				if (data.down) client.player.moveDown();
+				client.player.enforceTopSpeed();		
 			}
 
-			if (doUpdate) {
-				if (!client.player.strafing) client.player.updateAngle();
-
-				client.player.update();
-			}
+			if (data.z == KEYSTATE.HIT) client.player.inputZ(true);
+			if (data.c == KEYSTATE.HELD) client.player.inputC(true);
 		}
 	});
 
@@ -352,7 +317,8 @@ function update() {
 		}		
 	}
 }
-	
+var updateInterval = setInterval(update, 40);
+
 // Update the official time of each game once per second
 var updateTimes = function() {
 	for (g in menu.games) {
@@ -360,5 +326,3 @@ var updateTimes = function() {
 	}
 }
 var updateTimeInterval = setInterval(updateTimes, 1000);
-
-var updateInterval = setInterval(update, 40);

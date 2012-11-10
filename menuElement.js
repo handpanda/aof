@@ -40,7 +40,7 @@ menuElement.prototype.draw = function(context) {
 			context.font = '24pt bold';
 			context.fillStyle = color2;
 
-			context.fillText(this.title, pos.x + this.width / 2, pos.y + this.height);
+			context.fillText(this.title, this.pos.x + this.width / 2, this.pos.y + this.height);
 			break;
 	}
 }
