@@ -59,7 +59,6 @@ menu.addRandomGame();
 menu.addRandomGame();
 //menu.addRandomGame();
 //menu.addRandomGame();
-console.log(menu.games.length);
 
 var MAX_LATENCY = 10000;
 
