@@ -104,9 +104,9 @@ Man.prototype.moveUp = function() {
 }
 
 Man.prototype.enforceTopSpeed = function() {
-	var speed = client.player.vel.length();
+	var speed = this.vel.length();
 
-	if ( speed > this.topSpeed ) client.player.vel.scale(this.topSpeed / speed);
+	if ( speed > this.topSpeed ) this.vel.scale(this.topSpeed / speed);
 }
 
 Man.prototype.inputZ = function( hit ) {
