@@ -37,8 +37,8 @@ var Game = function(team1, team2, players) {
 	var fieldH = dims.fieldWidth;
 
 	// Create AI players for each team
-	var hPlayers = 1;
-	var vPlayers = 1;
+	var hPlayers = 4;
+	var vPlayers = 2;
 
 	for (r = 0; r < vPlayers; r++) {
 		for (c = 0; c < hPlayers; c++) {
@@ -193,7 +193,7 @@ Game.prototype.updatePlayers = function() {
 					}	
 				} else {
 					if (!(this.ballHolder != null && this.ballHolder.side == player.side)) {
-						if (distToBall < 50) {
+						if (distToBall < 100) {
 							// If the player is near the ball and his side does not control it, slide tackle toward it
 							if (!(this.ballHolder != null && this.ballHolder.side == player.side)) player.attemptAction(ACT.SLIDE);
 						} else {

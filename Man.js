@@ -154,18 +154,18 @@ Man.prototype.goToward = function(pos) {
 	if (ACT.canAccelerate(this.action)) {
 		this.vel.set(new Vec2(0, 0));
 
-		if (Math.abs(this.pos.x - pos.x) > this.topSpeed) {
-			if (this.pos.x < pos.x) this.vel.x = this.topSpeed;	
-			if (this.pos.x > pos.x) this.vel.x = -this.topSpeed;
+		if (Math.abs(this.pos.x - pos.x) > this.runSpeed) {
+			if (this.pos.x < pos.x) this.vel.x = this.runSpeed;	
+			if (this.pos.x > pos.x) this.vel.x = -this.runSpeed;
 		} else this.pos.x = pos.x;
-		if (Math.abs(this.pos.y - pos.y) > this.topSpeed) {
-			if (this.pos.y < pos.y) this.vel.y = this.topSpeed;
-			if (this.pos.y > pos.y) this.vel.y = -this.topSpeed;
+		if (Math.abs(this.pos.y - pos.y) > this.runSpeed) {
+			if (this.pos.y < pos.y) this.vel.y = this.runSpeed;
+			if (this.pos.y > pos.y) this.vel.y = -this.runSpeed;
 		} else this.pos.y = pos.y;
 
 		var absSpeed = this.vel.length();
 
-		if (absSpeed > this.topSpeed) this.vel.scale(this.topSpeed / absSpeed);
+		if (absSpeed > this.runSpeed) this.vel.scale(this.runSpeed / absSpeed);
 	}
 }
 

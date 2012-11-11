@@ -73,15 +73,23 @@ Field.prototype.interact = function(ball) {
 	}
 
 	if (ball.overlaps(this.leftGoal)) {
-		ball.vel.zero();
-		ball.pos.set(new Vec2(this.grass.width / 2 - ball.width / 2, this.grass.height / 2 - ball.height / 2));
-		return new Event.Event('right', Event.type.GOAL);
+		if (ball.z == 0) {
+			ball.vel.zero();
+			ball.pos.set(new Vec2(this.grass.width / 2 - ball.width / 2, this.grass.height / 2 - ball.height / 2));
+			return new Event.Event('right', Event.type.GOAL);
+		} else {
+			ball.bounce(this.leftGoal);
+		}
 	}
 
 	if (ball.overlaps(this.rightGoal)) {
-		ball.vel.zero();
-		ball.pos.set(new Vec2(this.grass.width / 2 - ball.width / 2, this.grass.height / 2 - ball.height / 2));
-		return new Event.Event('left', Event.type.GOAL);
+		if (ball.z == 0) {		
+			ball.vel.zero();
+			ball.pos.set(new Vec2(this.grass.width / 2 - ball.width / 2, this.grass.height / 2 - ball.height / 2));
+			return new Event.Event('left', Event.type.GOAL);
+		} else {
+			ball.bounce(this.rightGoal);
+		}
 	}
 
 	if (ball.overlaps(this.leftBackline)) {
