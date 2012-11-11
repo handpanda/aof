@@ -56,7 +56,6 @@ var clientnum = 0;
 var menu = new lobby.lobby();
 
 menu.addRandomGame();
-menu.addRandomGame();
 //menu.addRandomGame();
 //menu.addRandomGame();
 

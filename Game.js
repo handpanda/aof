@@ -305,7 +305,7 @@ Game.prototype.updateBallHolder = function() {
 	for (p in this.players) {
 		var player = this.players[p];
 
-		if (this.ball.z == 0 && player.action == ACT.SLIDE && player.overlaps(this.ball)) {
+		if (this.ball.z == 0 && player.action == ACT.SLIDE && player.overlaps(this.ball) && !(this.ballholder != null && player.speed < this.ballholder.speed)) {
 			if (this.ballHolder != null) this.ballHolder.hasBall = false;
 			this.ballHolder = player;
 			player.hasBall = true;
@@ -319,7 +319,7 @@ Game.prototype.updateBallHolder = function() {
 	} else {
 		for (p in this.players) {
 			var player = this.players[p];
-			if (this.ball.z == 0 && player.overlaps(this.ball) && (player.facedir.dot(this.ball.facedir) < 0.5 || player.speed > this.ball.speed)) {
+			if (this.ball.z == 0 && player.overlaps(this.ball) && (player.facedir.dot(this.ball.facedir) < 0.5 || player.speed > this.ball.speed) && !(this.ballholder != null && player.speed < this.ballholder.speed)) {
 				this.ballHolder = player;
 				player.hasBall = true;
 			}
