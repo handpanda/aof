@@ -48,8 +48,9 @@ clientMan.prototype.draw = function( context ) {
 				context.font = '24px serif';
 				context.fillStyle = 'white';
 				context.fillText(this.clientid, 0, 0);
+				context.font = '24px serif';
 				context.fillStyle = 'orange';
-				context.fillText(this.ping, 0, 24);
+				context.fillText(this.latency + '/' + this.msecsSinceLastPing, 0, 24);
 			context.restore();	
 		context.restore();
 	context.restore();	

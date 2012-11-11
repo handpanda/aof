@@ -289,7 +289,7 @@ Game.prototype.updateBall = function() {
 		this.ball.z = 0; 
 		this.ball.velZ = 0;
 	} else {
-		this.ball.velZ += 0.005;
+		this.ball.velZ += 0.002;
 	}
 
 	this.ball.update();
@@ -301,31 +301,11 @@ Game.prototype.updateBall = function() {
 
 Game.prototype.updateBallHolder = function() {
 
-	if (this.ballHolder != null) {
-	
-		// Kick the ball
-		if (this.ballHolder.action == ACT.KICK) {
-			this.ballHolder.action = ACT.STAND;
-			this.ballHolder.hasBall = false;
-			this.ball.vel.set(this.ballHolder.facedir.times(25));
-			//this.ball.velZ = 0;
-			this.ballHolder = null;
-
-		// Punt the ball
-		} else if (this.ballHolder.action == ACT.PUNT) {
-			this.ballHolder.action = ACT.STAND;
-			this.ballHolder.hasBall = false;
-			this.ball.vel.set(this.ballHolder.facedir.times(20));
-			this.ball.velZ = -0.1;
-			this.ballHolder = null;
-		}
-	}
-
 	// Steal the ball with a slide tackle
 	for (p in this.players) {
 		var player = this.players[p];
 
-		if (player.action == ACT.SLIDE && player.overlaps(this.ball)) {
+		if (this.ball.z == 0 && player.action == ACT.SLIDE && player.overlaps(this.ball)) {
 			if (this.ballHolder != null) this.ballHolder.hasBall = false;
 			this.ballHolder = player;
 			player.hasBall = true;
@@ -345,6 +325,26 @@ Game.prototype.updateBallHolder = function() {
 			}
 		}
 	}
+	
+	if (this.ballHolder != null) {
+	
+		// Kick the ball
+		if (this.ballHolder.action == ACT.KICK) {
+			this.ballHolder.action = ACT.STAND;
+			this.ballHolder.hasBall = false;
+			this.ball.vel.set(this.ballHolder.facedir.times(25));
+			//this.ball.velZ = 0;
+			this.ballHolder = null;
+
+		// Punt the ball
+		} else if (this.ballHolder.action == ACT.PUNT) {
+			this.ballHolder.action = ACT.STAND;
+			this.ballHolder.hasBall = false;
+			this.ball.vel.set(this.ballHolder.facedir.times(10));
+			this.ball.velZ = -0.06;
+			this.ballHolder = null;
+		}
+	}	
 }
 
 Game.prototype.getClientData = function() {

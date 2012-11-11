@@ -29,7 +29,8 @@ var clientEntity = function(pos, objtype, side) {
 	this.height = 	this.type.height;
 	this.id = -1;
 	this.clientid = -1;
-	this.ping = 0;
+	this.latency = 0;
+	this.msecsSinceLastPing = 0;
 	this.angle = 	0.0;
 	this.center =   new Vec2(this.pos.x + this.width / 2, this.pos.y + this.width / 2);
 	this.facedir = 	new Vec2(Math.cos(this.angle), Math.sin(this.angle));
@@ -71,5 +72,6 @@ clientEntity.prototype.grab = function(data) {
 	this.side = 	data.side;
 	this.action = 	data.action;
 	this.class = 	data.class;
-	this.ping = 	data.ping;
+	this.latency = 	data.latency;
+	this.msecsSinceLastPing = data.msecsSinceLastPing;
 }

@@ -60,7 +60,7 @@ menu.addRandomGame();
 //menu.addRandomGame();
 //menu.addRandomGame();
 
-var MAX_LATENCY = 10000;
+var MAX_LATENCY = 50; // milliseconds
 
 sio.sockets.on('connection', function(client) {
 
@@ -72,8 +72,8 @@ sio.sockets.on('connection', function(client) {
 
 	clientnum++;
 	client.ident = clientnum;
-	client.ping = 0;
-	client.lastping = 0;
+	client.msecsSinceLastPing = 0;
+	client.latency = 0;
 
 	client.game = null;
 	client.player = null;
@@ -167,7 +167,8 @@ sio.sockets.on('connection', function(client) {
 			console.log(msg + 'succeeded');
 			client.game.removePlayer(client.player);
 	
-			client.ping = 0;
+			client.latency = 0;
+			client.msecsSinceLastPing = 0;
 			client.game = null;
 	
 			client.broadcast.emit('kill', client.playerid);
@@ -218,9 +219,10 @@ sio.sockets.on('connection', function(client) {
 	});
 
 	client.on('polo', function(data) {
-		client.lastping = client.ping;
-		if (client.player != null) client.player.ping = client.ping;
-		client.ping = 0;
+		client.latency = client.msecsSinceLastPing;
+		if (client.player != null) client.player.latency = client.latency;
+		client.latency = 0;
+		client.msecsSinceLastPing = 0;
 	});
 
 });
@@ -269,7 +271,7 @@ function update() {
 		client = clients[c];
 
 		// If the client recently pinged back
-		if (client.ping == 0) {
+		if (client.latency == 0) {
 
 			// Send game data 
 			if (client.game != null) {
@@ -288,8 +290,8 @@ function update() {
 		}
 
 		// If the client is in a game, calculate their latency (resets to 0 when the player pings back)
-		if (client.game != null) client.ping++;
-		if (client.player != null) client.player.ping = client.ping;
+		if (client.game != null) client.msecsSinceLastPing += 1;
+		if (client.player != null) client.player.msecsSinceLastPing = client.msecsSinceLastPing;
 	}
 
 
@@ -301,7 +303,7 @@ function update() {
 		client = clients[c];
 	
 		// If the client's latency is too high, drop them from the server
-		if (client.ping > MAX_LATENCY) {
+		if (client.msecsSinceLastPing > MAX_LATENCY) {
 		
 			if (client.game != null && client.player != null) {
 
