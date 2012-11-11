@@ -78,12 +78,10 @@ Man.prototype.disableAuto = function() {
 
 Man.prototype.anticipateInput = function() {
 	this.vel.zero();
-	this.strafing = false;
 }
 
 Man.prototype.calcSpeed = function() {
 	this.topSpeed = this.runSpeed;
-	if ( this.strafing ) this.topSpeed *= 0.75;
 	this.speed = this.topSpeed;
 }
 
@@ -134,7 +132,7 @@ Man.prototype.inputX = function( hit ) {
 }
 
 Man.prototype.inputC = function( hit ) {
-	this.strafing = true;
+
 }
 // Set the "home" position for a player
 Man.prototype.setAnchor = function(anchor, radius) {

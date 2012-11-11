@@ -236,7 +236,7 @@ Game.prototype.updatePlayers = function() {
 			// Enforce top speed
 			var speed = player.vel.length();
 
-			if (speed > pf && !player.strafing) player.updateAngle();
+			if (speed > pf) player.updateAngle();
 
 			if (speed < pf && player.action == ACT.SLIDE) player.action = ACT.STAND;
 

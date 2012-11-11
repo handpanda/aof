@@ -199,7 +199,6 @@ sio.sockets.on('connection', function(client) {
 		if (client.player != null) {
 			var doUpdate = false;		
 
-			client.player.strafing = false;
 			if (ACT.canAccelerate(client.player.action)) {
 				client.player.anticipateInput();
 				if (data.x == KEYSTATE.HIT) client.player.inputX(true);
