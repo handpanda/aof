@@ -1,4 +1,4 @@
-var menuElement = function(type, name, title, pos, width, height, data, action) {
+var MenuElement = function(type, name, title, pos, width, height, data, action) {
 	this.type = type;
 	this.name = name;
 	this.title = title;
@@ -13,7 +13,7 @@ var menuElement = function(type, name, title, pos, width, height, data, action) 
 	this.chosen = false;
 }
 
-menuElement.prototype.draw = function(context) {
+MenuElement.prototype.draw = function(context) {
 	switch (this.type) {
 		case 'button':
 			if (this.chosen) context.fillStyle = color2;
@@ -45,6 +45,6 @@ menuElement.prototype.draw = function(context) {
 	}
 }
 
-menuElement.prototype.doAction = function() {
+MenuElement.prototype.doAction = function() {
 	if (this.action != null) this.action();
 }

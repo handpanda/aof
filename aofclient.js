@@ -291,7 +291,7 @@ $(document).ready(function() {
 			}		
 		}
 			
-		refreshMenu();
+		menu.refresh();
 	});		
 
 	socket.emit('ready', null);
@@ -414,132 +414,11 @@ var buttonHeight = 24;
 var team1Name = '';
 var team2Name = '';
 
+var menu = new Menu();
+
 var clearChosenEntries = function(name) {
 	for (l in elementList) {
 		if (elementList[l].name == name) elementList[l].chosen = false;
-	}
-}
-
-var refreshMenu = function() {
-	elementList = [];
-	console.log('refresh');
-	console.log(gamelist.length);
-	switch (currentScreen) {
-		case screen.TITLE:
-			console.log('title');
-			break;
-		case screen.LIST:
-			console.log('list');
-			var y = menudims.list.yPos + vScroll;
-
-			// List of games in progress
-			for (g in gamelist) {
-				console.log(gamelist[g]);
-				elementList.push(new menuElement('button', 'game', gamelist[g].team1Name + ' vs ' + gamelist[g].team2Name, new Vec2(menudims.list.xPos, y), menudims.list.width, buttonHeight, 
-							{ id: gamelist[g].id },
-							function() {
-								attemptToJoinGame( this.data.id );
-							})
-						);
-				y += buttonHeight + interButtonSpacing;
-			}
-
-			// Button to make a new game
-			elementList.push(new menuElement('button', 'new game', 'New Game', new Vec2(menudims.list.xPos, y), menudims.list.width, buttonHeight,
-						{ },
-						function() {
-							switchScreen(screen.NEWGAME);
-						})
-					);
-			break;
-		case screen.NEWGAME:
-			console.log('new game');
-			var y = menudims.list.yPos + vScroll;
-			
-			elementList.push(new menuElement('textbox', 'team1', 'Team 1:', new Vec2(menudims.list.xPos, y), menudims.list.width, buttonHeight, { }, null));
-			y += buttonHeight + interButtonSpacing;	
-
-			for (n in names) {
-				console.log(names[n]);
-				elementList.push(new menuElement('button', 'team1', names[n], new Vec2(menudims.list.xPos, y), menudims.list.width, buttonHeight,
-							{ },
-							function() {
-								team1Name = this.title;
-								clearChosenEntries('team1');
-								this.chosen = true;
-							})
-						);
-				y += buttonHeight + interButtonSpacing;	
-			}
-
-			y += buttonHeight + interButtonSpacing;	
-
-			elementList.push(new menuElement('textbox', 'team2', 'Team 2:', new Vec2(menudims.list.xPos, y), menudims.list.width, buttonHeight, { }, null));
-			y += buttonHeight + interButtonSpacing;				
-
-			for (n in names) {
-				console.log(names[n]);
-				elementList.push(new menuElement('button', 'team2', names[n], new Vec2(menudims.list.xPos, y), menudims.list.width, buttonHeight, 
-							{ },
-							function() {
-								team2Name = this.title;
-								clearChosenEntries('team2');
-								this.chosen = true;
-							})
-						);
-				y += buttonHeight + interButtonSpacing;	
-			}
-
-			y += buttonHeight + interButtonSpacing;	
-
-			elementList.push(new menuElement('button', 'start', 'Start!', new Vec2(menudims.list.xPos, y), menudims.list.width, buttonHeight,
-						{ },
-						function() {
-							attemptToAddGame(team1Name, team2Name);	
-						})
-					);
-			y += buttonHeight + interButtonSpacing;		
-
-			break;	
-		case screen.GAME:
-			console.log('game');
-			elementList.push(new menuElement('button', 'exit', 'Back to Lobby', new Vec2(menudims.exitbutton.xPos, menudims.exitbutton.yPos),
-						menudims.exitbutton.width, 24, 
-						{ },
-						function() {
-							leaveGame();
-						})
-					); 
-			break;
-	}
-}
-
-var updateMenu = function() {
-	for (l in elementList) {
-		var elem = elementList[l];
-
-		var hovered = false;
-		var selected = false;
-
-		if (mousePos.x >= elem.pos.x && mousePos.x <= elem.pos.x + elem.width &&
-			mousePos.y >= elem.pos.y && mousePos.y <= elem.pos.y + elem.height) {
-			hovered = true;
-			if (mousedown) {
-				selected = true;
-			}
-		}
-
-		switch (elem.type) {
-			case 'button':
-				if (selected == true && elem.selected == false) elem.doAction();
-				break;
-			case 'textbox':
-
-				break;
-		}
-		
-		elem.hovered = hovered;
-		elem.selected = selected;
 	}
 }
 
@@ -548,7 +427,7 @@ var switchScreen = function(toScreen) {
 
 	currentScreen = toScreen;
 
-	refreshMenu();
+	menu.refresh();
 }
 
 var attemptToJoinGame = function(id) {
@@ -587,7 +466,7 @@ var updateInterval;
 function update() {
 	if ( overlay != null ) socket.emit( 'waiting', null );
 
-	updateMenu();
+	menu.update();
 
 	render();
 }
@@ -608,9 +487,7 @@ function render() {
 		context.fillStyle = 'blue';
 		context.fillText("List of currently active games", 0, 50);		
 		
-		for (l in elementList) {
-			elementList[l].draw(context);
-		}
+		menu.draw( context );
 		break;
 	case screen.NEWGAME:
 		context.font = "24px bold";
@@ -619,10 +496,7 @@ function render() {
 		context.fillStyle = 'blue';
 		context.fillText("List of currently active games", 0, 50);		
 		
-		for (l in elementList) {
-			elementList[l].draw(context);
-		}
-
+		menu.draw( context );
 		break;
 	case screen.HOWTO:
 
@@ -639,9 +513,7 @@ function render() {
 
 		drawField(context);
 
-		for (l in elementList) {
-			elementList[l].draw(context);
-		}
+		menu.draw( context );
 		context.fillStyle = color1;
 
 		context.fillRect(355, 5, 440, 24);
