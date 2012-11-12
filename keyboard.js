@@ -85,17 +85,5 @@ function anyKeyHit() {
 	
 	return false;
 }
-/*
-JUEGO.keyboardEvents = [];
 
-JUEGO.KeyboardEvent = function( action, func ) {
-	this.action = action;
-	this.func = func;
-}
-
-function registerKeyEvent( action, func ) {
-	keyboardEvents.push( new JUEGO.KeyboardEvent( action, func ) );
-};*/
-
-document.onkeydown = keyDownHandler;
-document.onkeyup = keyUpHandler
+module.exports = KEY;

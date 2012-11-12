@@ -76,7 +76,7 @@ Field.prototype.interact = function(ball) {
 		if (ball.z == 0) {
 			ball.vel.zero();
 			ball.pos.set(new Vec2(this.grass.width / 2 - ball.width / 2, this.grass.height / 2 - ball.height / 2));
-			return new Event.Event('right', Event.type.GOAL);
+			return new Event('right', Event.prototype.TYPE.GOAL);
 		} else {
 			ball.bounce(this.leftGoal);
 		}
@@ -86,7 +86,7 @@ Field.prototype.interact = function(ball) {
 		if (ball.z == 0) {		
 			ball.vel.zero();
 			ball.pos.set(new Vec2(this.grass.width / 2 - ball.width / 2, this.grass.height / 2 - ball.height / 2));
-			return new Event.Event('left', Event.type.GOAL);
+			return new Event('left', Event.prototype.TYPE.GOAL);
 		} else {
 			ball.bounce(this.rightGoal);
 		}
@@ -100,19 +100,19 @@ Field.prototype.interact = function(ball) {
 			ball.vel.zero();
 			ball.pos.set(this.leftGoalieBox.pos.plus(new Vec2(this.leftGoalieBox.width - ball.width / 2, this.leftGoalieBox.height - ball.height / 2)));			
 		}
-		return new Event.Event('', Event.type.GOALKICK);
+		return new Event('', Event.prototype.TYPE.GOALKICK);
 	}
 
 	if (ball.overlaps(this.topSideline)) {
 		ball.vel.zero();
 		ball.pos.set(new Vec2(ball.pos.x, this.topSideline.pos.y + this.topSideline.height));
-		return new Event.Event('', Event.type.THROWIN);
+		return new Event('', Event.prototype.TYPE.THROWIN);
 	}
 
 	if (ball.overlaps(this.bottomSideline)) {
 		ball.vel.zero();
 		ball.pos.set(new Vec2(ball.pos.x, this.bottomSideline.pos.y - ball.height));
-		return new Event.Event('', Event.type.THROWIN);
+		return new Event('', Event.prototype.TYPE.THROWIN);
 	}
 
 	if (ball.overlaps(this.rightBackline)) {
@@ -123,7 +123,7 @@ Field.prototype.interact = function(ball) {
 			ball.vel.zero();
 			ball.pos.set(this.rightGoalieBox.pos.plus(new Vec2(-ball.width / 2, this.rightGoalieBox.height - ball.height / 2)));			
 		}
-		return new Event.Event('', Event.type.GOALKICK);
+		return new Event('', Event.prototype.TYPE.GOALKICK);
 	}
 }
 

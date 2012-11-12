@@ -66,13 +66,15 @@ var canvas, context;
 
 var canvasDiagonal;
 
+var inDebugMode = false;
+
 $(document).ready(function() {
 	canvas = document.getElementById("main");
 	context = canvas.getContext("2d");
 
 	canvasDiagonal = Math.sqrt( canvas.width * canvas.width + canvas.height * canvas.height );
 
-	socket = new io.connect('http://localhost:4000');
+	socket = new io.connect("http://localhost:4000");
 	var entry_el = $('#entry');
 
 	socket.on('message', function(data) {
@@ -82,6 +84,10 @@ $(document).ready(function() {
 
 		window.scrollBy(0, 1000000000000000);
 		entry_el.focus();
+	});
+
+	socket.on('debugMode', function(data) {
+		inDebugMode = data;
 	});
 
 	socket.on('playerid', function(data) {
@@ -212,6 +218,18 @@ $(document).ready(function() {
 		ball.grab(data);
 	});
 
+	/*
+	 * Packet /gameData/
+	 * 
+	 * Game state information
+	 * 
+	 * leftScore - left side score
+	 * rightScore - right side score
+	 * time - game clock, in seconds
+	 * stopped - has the game been stopped for some event
+	 * event - some event
+	 * 
+	 */
 	socket.on('gameData', function(data) {
 		leftScore = data.leftScore;
 		rightScore = data.rightScore;
@@ -219,43 +237,63 @@ $(document).ready(function() {
 		gameStopped = data.stopped;
 		gameEvent = data.event;
 
-		if ( overlay == null && gameEvent == eventType.GOAL ) {
-			overlay = new goalAnim();
+		if ( overlay == null && gameEvent != null && gameEvent.type == Event.prototype.TYPE.GOAL ) {
+			overlay = new anim1( "GOAL" );
 		}
 
-		if ( overlay == null && gameEvent == eventType.GOALKICK ) {
-			overlay = new goalKickAnim();
+		if ( overlay == null && gameEvent != null && gameEvent.type == Event.prototype.TYPE.GOALKICK ) {
+			overlay = new anim2( "GOAL KICK" );
 		}
 		if ( overlay != null && !gameStopped ) {
 			overlay.complete();
 		}
-	});	
-
-	socket.on('listentry', function(data) {
-		var found = false;
-		for (g in gamelist) {
-			if (data.id == gamelist[g].id) {
-				found = true;
-				break;
+		
+		if ( overlay == null && gameEvent != null && gameEvent.type == Event.prototype.TYPE.ENDOFGAME ) {
+			if ( leftScore == rightScore ) {
+				overlay = new anim1( "DRAW" );
+			} else {
+				var winner;
+				
+				if ( leftScore > rightScore ) winner = 'left';
+				else winner = 'right';
+					
+				if ( clientPlayer.side == winner ) overlay = new anim1( "WIN" );
+				else overlay = new anim1( "LOSE" );
 			}
 		}
+	});
+	
+	socket.on('eventComplete', function(data) {
+		console.log( '/eventComplete/ ' + data.type );
+		
+		if ( overlay != null ) overlay.complete();
+		
+		if ( data.type == Event.prototype.TYPE.ENDOFGAME ) leaveGame();
+	});
 
-		if (!found) {
-			console.log("Game: " + data);
-			gamelist.push(data);
-		}		
+	socket.on('list', function(data) {
+		var found;
+		
+		gamelist = [];
+		
+		for ( d in data ) {
+			found = false;
+			
+			for (g in gamelist) {
+				if (data[d].id == gamelist[g].id) {
+					found = true;
+					break;
+				}
+			}		
+			if (!found) {
+				console.log("Game: " + data[d]);
+				gamelist.push(data[d]);
+			}		
+		}
+			
 		refreshMenu();
 	});		
-/*
-	entry_el.keypress(function(event) {
-		if (event.keyCode != 13) return;
-		var msg = entry_el.attr('value');
-		if (msg) {
-			socket.send(msg);
-			entry_el.attr('value', '');
-		}
-	});
-*/
+
 	socket.emit('ready', null);
 
 	socket.emit('list', null);
@@ -271,6 +309,8 @@ $(document).ready(function() {
 	document.onmousemove = mouseMoveHandler;
 	document.onmousedown = mouseDownHandler;
 	document.onmouseup = mouseUpHandler;
+	document.onkeydown = keyDownHandler;
+	document.onkeyup = keyUpHandler;
 });	
 
 mousePos = new Vec2(0, 0);
@@ -539,7 +579,7 @@ var leaveGame = function() {
 
 	socket.emit('leave', null);
 
-	switchScreen(screen.LIST);
+	switchScreen( screen.LIST );
 }	
 
 var updateInterval;
@@ -554,7 +594,8 @@ function update() {
 
 function render() {
 	context.clearRect(0, 0, canvas.width, canvas.height);
-	context.beginPath();
+	context.beginPath();	document.onkeydown = keyDownHandler;
+	document.onkeyup = keyUpHandler;
 
 	switch (currentScreen) {
 	case screen.TITLE:
@@ -587,7 +628,8 @@ function render() {
 
 		break;
 	case screen.GAME:
-		socket.emit('input', keys);
+		if ( inDebugMode ) socket.emit('debuginput', keyboardState);
+		else socket.emit('input', keys);
 		updateKeys();
 		keyboardStateUpdater();
 

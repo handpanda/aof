@@ -3,7 +3,7 @@ var discrete = require('./discrete.js');
 var dims = require('./dims.js');
 var type = require('./type.js');
 var Entity = require('./Entity.js');
-var event = require('./Event.js');
+var Event = require('./Event.js');
 var Field = require('./Field.js');
 var Ball = require('./Ball.js');
 var Man = require('./Man.js');
@@ -12,45 +12,31 @@ var ACT = require('./Act.js');
 // Initial game id
 var gameid = Math.floor(Math.random() * 1000);
 
+// Length of game (Five minutes)
+var GAME_LENGTH_SECS = 300;
+
 /*
 	Game
 
 	Match between two teams
 */ 
 
-var Game = function(team1, team2, players) {
+var Game = function(team1, team2) {
 	this.id = (gameid += Math.floor(Math.random() * 40));
 	this.team1 = team1;
 	this.team2 = team2;
-	this.players = players;
+	this.players = [];
 	this.gamefield = new Field();
 
 	// Queue of packets to be sent
 	this.packetQueue = [];
-	
-	// Upper left corner of the field
-	var fieldL = dims.sidelineWidth;
-	var fieldT = dims.sidelineWidth;
-
-	// Dimensions of the field
-	var fieldW = dims.fieldLength;
-	var fieldH = dims.fieldWidth;
-
-	// Create AI players for each team
-	var hPlayers = 4;
-	var vPlayers = 2;
-
-	for (r = 0; r < vPlayers; r++) {
-		for (c = 0; c < hPlayers; c++) {
-			var player = new Man(new Vec2(fieldL + (c + 1) * fieldW / (hPlayers + 2), fieldT + (r + 1) * fieldH / (vPlayers + 2)), (c < hPlayers / 2) ? 'left' : 'right' );
-			player.enableAuto();
-			player.setAnchor(player.pos, dims.fieldWidth / 4);
-
-			this.players.push(player);
-		}	
-	}
 
 	this.stopTimer = 0;
+	
+	this.state = Game.prototype.STATE.INPROGRESS;
+	
+	// "Kill me" flag
+	this.removeThis = false;
 	
 	this.data = {	
 		leftScore: 0,
@@ -65,7 +51,6 @@ var Game = function(team1, team2, players) {
 
 	// The ball
 	this.ball = new Ball(new Vec2(dims.fieldLength / 2 - type.ball.width / 2, dims.fieldWidth / 2 - type.ball.height / 2));
-
 }
 
 /*
@@ -79,6 +64,27 @@ Game.prototype.STATE = {
 	READY: 0,
 	INPROGRESS: 1,
 	COMPLETED: 2,	
+}
+
+Game.prototype.addAIPlayers = function( hPlayers, vPlayers ) {
+	// Upper left corner of the field
+	var fieldL = dims.sidelineWidth;
+	var fieldT = dims.sidelineWidth;
+
+	// Dimensions of the field
+	var fieldW = dims.fieldLength;
+	var fieldH = dims.fieldWidth;
+
+	// Create AI players for each team
+	for (r = 0; r < vPlayers; r++) {
+		for (c = 0; c < hPlayers; c++) {
+			var player = new Man(new Vec2(fieldL + (c + 1) * fieldW / (hPlayers + 2), fieldT + (r + 1) * fieldH / (vPlayers + 2)), (c < hPlayers / 2) ? 'left' : 'right' );
+			player.enableAuto();
+			player.setAnchor(player.pos, dims.fieldWidth / 4);
+
+			this.players.push(player);
+		}	
+	}	
 }
 
 // Update and clear the packet queue
@@ -109,6 +115,7 @@ Game.prototype.stopGame = function(e) {
 
 Game.prototype.startGame = function() {
 	this.data.stopped = false;
+	this.complete(this.data.event);
 	this.data.event = null;
 	this.stopTimer = 0;
 }
@@ -118,24 +125,52 @@ Game.prototype.startGame = function() {
 */
 Game.prototype.react = function(e) {
 	switch (e.type) {
-	case event.type.GOAL:
+	case Event.prototype.TYPE.GOAL:
 		if (this.ballHolder != null) this.ballHolder.hasBall = false;
 		this.ballHolder = null;
 		if (e.side == 'left') this.data.leftScore++;
 		else if (e.side == 'right') this.data.rightScore++;
-		this.stopGame( e.type );
+		this.stopGame( e );
 		break;
-	case event.type.GOALKICK:
+	case Event.prototype.TYPE.GOALKICK:
 		if (this.ballHolder != null) this.ballHolder.hasBall = false;
 		this.ballHolder = null;
-		this.stopGame( e.type );
+		this.stopGame( e );
 		break;
-	case event.type.THROWIN:
+	case Event.prototype.TYPE.THROWIN:
 		if (this.ballHolder != null) this.ballHolder.hasBall = false;
 		this.ballHolder = null;
+		break;
+	case Event.prototype.TYPE.ENDOFGAME:
+		this.stopGame( e );
+		this.state = Game.prototype.STATE.COMPLETED;
 		break;
 	default:
-		console.log("Field gave unknown event type");
+		console.log("/Game.react/ unknown event type");
+	}
+}
+
+/*
+	Complete some game event
+*/
+Game.prototype.complete = function(e) {
+	this.addPacket( 'eventComplete', e, 0 ); 
+	
+	switch (e.type) {
+	case Event.prototype.TYPE.GOAL:
+
+		break;
+	case Event.prototype.TYPE.GOALKICK:
+
+		break;
+	case Event.prototype.TYPE.THROWIN:
+
+		break;
+	case Event.prototype.TYPE.ENDOFGAME:
+		this.removeThis = true;
+		break;
+	default:
+		console.log("/Game.complete/ unknown event type");
 	}
 }
 
@@ -154,6 +189,8 @@ Game.prototype.update = function() {
 		this.stopTimer--;
 	}
 	if ( this.data.stopped && this.stopTimer <= 0 ) this.startGame();
+
+	if ( this.state == Game.prototype.STATE.INPROGRESS && this.data.time > GAME_LENGTH_SECS ) this.react( new Event( '', Event.prototype.TYPE.ENDOFGAME ) );
 
 	this.updatePlayers();
 	
@@ -314,12 +351,12 @@ Game.prototype.updateBallHolder = function() {
 
 	// Pick the ball up
 	if (this.ballHolder != null) {
-		this.ball.pos.x = this.ballHolder.center.x + this.ballHolder.facedir.x * 30;
-		this.ball.pos.y = this.ballHolder.center.y + this.ballHolder.facedir.y * 30;
+		this.ball.pos.x = this.ballHolder.center.x + this.ballHolder.faceDir.x * 30;
+		this.ball.pos.y = this.ballHolder.center.y + this.ballHolder.faceDir.y * 30;
 	} else {
 		for (p in this.players) {
 			var player = this.players[p];
-			if (this.ball.z == 0 && player.overlaps(this.ball) && (player.facedir.dot(this.ball.facedir) < 0.5 || player.speed > this.ball.speed) && !(this.ballholder != null && player.speed < this.ballholder.speed)) {
+			if (this.ball.z == 0 && player.overlaps(this.ball) && (player.faceDir.dot(this.ball.faceDir) < 0.5 || player.speed > this.ball.speed) && !(this.ballholder != null && player.speed < this.ballholder.speed)) {
 				this.ballHolder = player;
 				player.hasBall = true;
 			}
@@ -332,7 +369,7 @@ Game.prototype.updateBallHolder = function() {
 		if (this.ballHolder.action == ACT.KICK) {
 			this.ballHolder.action = ACT.STAND;
 			this.ballHolder.hasBall = false;
-			this.ball.vel.set(this.ballHolder.facedir.times(25));
+			this.ball.vel.set(this.ballHolder.faceDir.times(25));
 			//this.ball.velZ = 0;
 			this.ballHolder = null;
 
@@ -340,7 +377,7 @@ Game.prototype.updateBallHolder = function() {
 		} else if (this.ballHolder.action == ACT.PUNT) {
 			this.ballHolder.action = ACT.STAND;
 			this.ballHolder.hasBall = false;
-			this.ball.vel.set(this.ballHolder.facedir.times(10));
+			this.ball.vel.set(this.ballHolder.faceDir.times(10));
 			this.ball.velZ = -0.06;
 			this.ballHolder = null;
 		}

@@ -5,23 +5,31 @@ var discrete = require('./discrete.js');
 /*
 	Main Menu
 */
-var lobby = function() {
+var Lobby = function() {
 	// List of games
 	this.games = [];
+	this.hPlayers = 4;
+	this.vPlayers = 2;
+}
+
+Lobby.prototype.setDefaultPlayerCount = function( hPlayers, vPlayers ) {
+	this.hPlayers = hPlayers;
+	this.vPlayers = vPlayers;
 }
 
 // Make new game between two specific teams
-lobby.prototype.addGame = function(team1Name, team2Name) {
+Lobby.prototype.addGame = function(team1Name, team2Name) {
 	var game = new Game(new team.Team(team1Name, 'left'), new team.Team(team2Name, 'right'), []);
+	game.addAIPlayers( this.hPlayers, this.vPlayers );
 	
 	this.games.push( game );
-	console.log('lobby: ' + 'added game ' + game.id + ': ' + team1Name + ' v ' + team2Name );
+	console.log('Lobby: ' + 'added game ' + game.id + ': ' + team1Name + ' v ' + team2Name );
 	
 	return game.id;
 }
 	
 // Make a new game between two random teams
-lobby.prototype.addRandomGame = function() {
+Lobby.prototype.addRandomGame = function() {
 	var leftTeamName, rightTeamName;
 	leftTeamName = discrete.randElem(team.names);
 	do {
@@ -31,4 +39,4 @@ lobby.prototype.addRandomGame = function() {
 	this.addGame(leftTeamName, rightTeamName);		
 }
 
-module.exports.lobby = lobby;
+module.exports = Lobby;

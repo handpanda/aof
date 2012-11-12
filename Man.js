@@ -48,6 +48,11 @@ Man.prototype.attemptAction = function(action) {
 	if (!ACT.canTransfer(this.action, action)) return;
 
 	switch (action) {
+		case ACT.RUN:
+			this.vel.set( this.faceDir );
+			this.vel.scale( this.speed );
+			this.enforceTopSpeed();
+			break;
 		case ACT.KICK:	
 			// Kick		
 			this.action = ACT.KICK;
@@ -55,7 +60,7 @@ Man.prototype.attemptAction = function(action) {
 		case ACT.SLIDE:
 			// Slide Tackle
 			this.action = ACT.SLIDE;
-			this.vel.add(this.facedir.times(15));
+			this.vel.add(this.faceDir.times(15));
 			break;
 		case ACT.PUNT:
 			// Punt
@@ -76,29 +81,26 @@ Man.prototype.disableAuto = function() {
 	this.isAuto = false;
 }
 
-Man.prototype.anticipateInput = function() {
-	this.vel.zero();
-}
-
 Man.prototype.calcSpeed = function() {
 	this.topSpeed = this.runSpeed;
 	this.speed = this.topSpeed;
 }
 
-Man.prototype.moveLeft = function() {
-	this.vel.x = -this.speed;
-}
-
-Man.prototype.moveRight = function() {
-	this.vel.x = this.speed;
-}
-
-Man.prototype.moveDown = function() {
-	this.vel.y = this.speed;
-}
-
-Man.prototype.moveUp = function() {
-	this.vel.y = -this.speed;
+Man.prototype.inputDirs = function(left, right, up, down) {
+	this.faceDir.zero();
+	
+	var xDir = 0.0,
+		yDir = 0.0;
+		
+	if ( left ) xDir += -1.0;
+	if ( right ) xDir += 1.0;
+	if ( up ) yDir += -1.0;
+	if ( down ) yDir += 1.0;
+	
+	this.faceDir.setValues( xDir, yDir );
+	this.faceDir.normalize();
+	
+	this.attemptAction( ACT.RUN );		
 }
 
 Man.prototype.enforceTopSpeed = function() {

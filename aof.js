@@ -4,16 +4,30 @@ var http = require('http');
 	util = require('util');
 	path = require('path');
 
-var Vec2 = require('./Vec2.js');
+// Command line options and defaults	
+var argv = require('optimist').argv;
+			
+var hPlayers = 4,
+	vPlayers = 2,
+	inDebugMode = false,
+	isLocal = false;
 
+if ( argv.h ) hPlayers = argv.h;
+if ( argv.v ) vPlayers = argv.v;
+if ( argv.debug ) inDebugMode = true;
+if ( argv.local ) isLocal = true;
+
+var Vec2 = require('./Vec2.js');
 var Entity = require('./Entity.js');
 var discrete = require('./discrete.js');
 var team = require('./Team.js');
 var field = require('./Field.js');
-var event = require('./Event.js');
-var lobby = require('./lobby.js');
+var Event = require('./Event.js');
+var Lobby = require('./Lobby.js');
+var Game = require('./Game.js');
 var Man = require('./Man.js');
 var ACT = require('./Act.js');
+var KEY = require('./keyboard.js');
 
 var KEYSTATE = {
 	UP : 0,
@@ -21,14 +35,14 @@ var KEYSTATE = {
 	HELD : 2,
 };
 
+var MAX_LATENCY = 50; // milliseconds
+
 var clients = [];
 
 /*
 	Server Class
-
 */
 var server = http.createServer(function(request, response) {
-
 	var contentType = 'text/html';
 	var filePath = '.' + request.url;
 	var extname = path.extname(filePath);
@@ -45,7 +59,7 @@ var server = http.createServer(function(request, response) {
 
 	var rs = fs.createReadStream(filePath);
 	util.pump(rs, response);
-}).listen(4000); 
+}).listen(4000);
 
 var sio = io.listen(server, {log: 'false'});
 
@@ -53,21 +67,15 @@ sio.set('log level', 1);
 	
 var clientnum = 0;
 
-var menu = new lobby.lobby();
+var lobby = new Lobby();
 
-menu.addRandomGame();
-//menu.addRandomGame();
-//menu.addRandomGame();
-
-var MAX_LATENCY = 50; // milliseconds
+lobby.setDefaultPlayerCount( hPlayers, vPlayers );
 
 sio.sockets.on('connection', function(client) {
 
 	var username;
 
 	clients.push(client);
-
-	client.send('Welcome!\n');
 
 	clientnum++;
 	client.ident = clientnum;
@@ -83,25 +91,29 @@ sio.sockets.on('connection', function(client) {
 	client.on('list', function(data) {
 		console.log('/list/: ' + 'Client ' + client.ident + ' requested game list' );
 		
-		for (g in menu.games) {
-			client.emit('listentry', menu.games[g].getClientData());
+		var gameList = [];
+		
+		for (g in lobby.games) {
+			gameList.push( lobby.games[g].getClientData() );
 		} 
+		
+		client.emit( 'list', gameList );
 	});
 
 	client.on('addgame', function(data) {
 		console.log('/addgame/: ' + 'Client ' + client.ident + ' requested to add game: ' + data.team1 + ' v ' + data.team2 );		
 		
-		var id = menu.addGame( data.team1, data.team2 );
+		var id = lobby.addGame( data.team1, data.team2 );
 	});
 
 	client.on('join', function(data) {
-		var msg = '/join/: ' + 'Client ' + client.ident + ' attempted to join game ' + data + '...';
+		var msg = '/join/: ' + 'Client ' + client.ident + ' attempted to join game ' + data + '..';
 
 		client.game = null;
 
-		for (g in menu.games) {
-			if (menu.games[g].id == data) {
-				client.game = menu.games[g];
+		for (g in lobby.games) {
+			if (lobby.games[g].id == data) {
+				client.game = lobby.games[g];
 				break;
 			} 
 		}
@@ -140,6 +152,7 @@ sio.sockets.on('connection', function(client) {
 				break;
 		}
 
+		client.emit('debugMode', inDebugMode);
 		client.emit('playerid', client.playerid);
 		client.emit('clientid', client.ident);
 		client.emit('currentRoom', client.game.gamefield.room);	
@@ -160,7 +173,7 @@ sio.sockets.on('connection', function(client) {
 			return;
 		}		
 		
-		var msg = '/leave/: ' + 'Client ' + client.ident + ' attempted to leave game ' + client.game.id + '...';
+		var msg = '/leave/: ' + 'Client ' + client.ident + ' attempted to leave game ' + client.game.id + '..';
 
 		if ( true ) {
 			console.log(msg + 'succeeded');
@@ -197,24 +210,37 @@ sio.sockets.on('connection', function(client) {
 
 	client.on('input', function(data) {
 		if (client.player != null) {
-			var doUpdate = false;		
-
 			if (ACT.canAccelerate(client.player.action)) {
-				client.player.anticipateInput();
-				if (data.x == KEYSTATE.HIT) client.player.inputX(true);
 				client.player.calcSpeed();
 				
-				if (data.left) client.player.moveLeft();
-				if (data.up) client.player.moveUp();
-				if (data.right) client.player.moveRight();
-				if (data.down) client.player.moveDown();
-				client.player.enforceTopSpeed();		
+				client.player.inputDirs(data.left, data.right, data.up, data.down);	
 			}
 
-			if (data.z == KEYSTATE.HIT) client.player.inputZ(true);
-			if (data.c == KEYSTATE.HELD) client.player.inputC(true);
+			client.player.inputZ( data.z == KEYSTATE.HIT );
+			client.player.inputX( data.x == KEYSTATE.HIT );
+			client.player.inputC( data.c == KEYSTATE.HELD );
 		}
 	});
+	
+	client.on('debuginput', function(data) {
+		if (client.player != null) {
+			if (ACT.canAccelerate(client.player.action)) {
+				client.player.calcSpeed();
+				
+				client.player.inputDirs(data[KEY.LEFT], data[KEY.RIGHT], data[KEY.UP], data[KEY.DOWN]);	
+			}
+
+			client.player.inputZ( data[KEY.Z] == KEYSTATE.HIT );
+			client.player.inputX( data[KEY.X] == KEYSTATE.HIT );
+			client.player.inputC( data[KEY.C] == KEYSTATE.HELD );
+		}
+		
+		if (data[KEY.E] == KEYSTATE.HIT) {
+			if ( client.game != null ) {
+				client.game.stopGame( new Event( '', Event.prototype.TYPE.ENDOFGAME ) );	
+			}
+		}
+	});	
 
 	client.on('polo', function(data) {
 		client.latency = client.msecsSinceLastPing;
@@ -227,12 +253,15 @@ sio.sockets.on('connection', function(client) {
 
 function update() {
 
-//////////////////
-// Update Games //
-//////////////////
+	// Add new games
+	if ( lobby.games.length == 0 ) {
+		lobby.addRandomGame();
+		
+	}
 
-	for (g in menu.games) {
-		var ga = menu.games[g];	
+	// Update games in progress
+	for (g in lobby.games) {
+		var ga = lobby.games[g];	
 
 		if (ga != null) {
 			ga.updatePacketQueue();
@@ -244,12 +273,12 @@ function update() {
 				ga.react(e);
 
 				switch (e.type) {
-				case event.type.GOAL:
+				case Event.prototype.TYPE.GOAL:
 
 					break;
-				case event.type.GOALKICK:
-				case event.type.THROWIN:
-				case event.type.CORNERKICK:
+				case Event.prototype.TYPE.GOALKICK:
+				case Event.prototype.TYPE.THROWIN:
+				case Event.prototype.TYPE.CORNERKICK:
 
 					break;
 				default:
@@ -261,10 +290,7 @@ function update() {
 		}
 	}
 
-///////////////////////////////
-// Send Game Data to Clients //
-///////////////////////////////
-
+	// Send game data to clients
 	for (c in clients) {
 		client = clients[c];
 
@@ -281,6 +307,8 @@ function update() {
 				client.emit('gameData', client.game.data);
 				client.emit('ball', client.game.ball);
 				client.game.sendPackets( client );
+			
+				if ( client.game.removeThis ) client.game = null;
 			}
 
 			// Ping the client again
@@ -292,11 +320,16 @@ function update() {
 		if (client.player != null) client.player.msecsSinceLastPing = client.msecsSinceLastPing;
 	}
 
+	// Remove completed games
+	for (g in lobby.games) {
+		if ( lobby.games[g].removeThis ) {
+			// Remove game from list
+			lobby.games.splice(g, 1);
+			// Boot clients
+		}
+	}
 
-///////////////////////////////
-// Drop Unresponsive Clients //
-///////////////////////////////
-
+	// Drop unresponsive clients
 	for (c in clients) {
 		client = clients[c];
 	
@@ -321,8 +354,8 @@ var updateInterval = setInterval(update, 40);
 
 // Update the official time of each game once per second
 var updateTimes = function() {
-	for (g in menu.games) {
-		menu.games[g].updateTime();
+	for (g in lobby.games) {
+		lobby.games[g].updateTime();
 	}
 }
 var updateTimeInterval = setInterval(updateTimes, 1000);

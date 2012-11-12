@@ -26,7 +26,7 @@ var Entity = function(pos, objtype, side) {
 	this.angle = 	0.0;
 	this.center =   new Vec2(this.pos.x + this.width / 2, this.pos.y + this.width / 2);
 	this.centerToPos = this.center.minus(this.pos);
-	this.facedir = 	new Vec2(Math.cos(this.angle), Math.sin(this.angle));
+	this.faceDir = 	new Vec2(Math.cos(this.angle), Math.sin(this.angle));
 	this.vel = 	new Vec2(0, 0);
 	this.speed = 	0;
 	this.topSpeed = 0;
@@ -44,8 +44,8 @@ var Entity = function(pos, objtype, side) {
 Entity.prototype.update = function() {
 	this.center.x =  this.pos.x + this.width / 2;
 	this.center.y =  this.pos.y + this.height / 2;
-	this.facedir.x = Math.cos(this.angle);
-	this.facedir.y = Math.sin(this.angle);	
+	this.faceDir.x = Math.cos(this.angle);
+	this.faceDir.y = Math.sin(this.angle);	
 }
 
 // Check for overlap with another object (both are modeled as rectangles with (x, y) in the top left corner)

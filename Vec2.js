@@ -19,6 +19,21 @@ Vec2.prototype.set = function(v) {
 	return this;
 }
 
+Vec2.prototype.setValues = function(x, y) {
+	this.x = x;
+	this.y = y;
+
+	return this;
+}
+
+Vec2.prototype.addX = function( x ) {
+	this.x += x;
+}
+
+Vec2.prototype.addY = function( y ) {
+	this.y += y;
+}
+
 Vec2.prototype.copy = function() {
 	return new Vec2(this.x, this.y);
 }

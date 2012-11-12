@@ -1,18 +1,19 @@
-function goalAnim() {
+function anim1( string ) {
+	this.string = string;
+	
 	this.width = 72 * 4;
 	this.height = 72 + 20;
 	
 	this.posX = canvas.width;
 	this.posY = canvas.height / 2 - this.height / 2;
 	
-	this.string = "GOAL";
-
 	this.velX = -300;
 	this.velY = 0;
 	
 	this.style = "italic 150px bolder fantasy";
 
 	this.passes = 0;
+	this.maxPasses = 1;
 
 	this.removeThis = false;
 
@@ -24,11 +25,11 @@ function goalAnim() {
 	this.stage = 0;
 }
 
-goalAnim.prototype.complete = function() {
+anim1.prototype.complete = function() {
 	this.stage = 3;
 }
 
-goalAnim.prototype.update = function() {
+anim1.prototype.update = function() {
 	switch ( this.stage ) {
 		case 0:
 			this.posX += this.velX;
@@ -37,7 +38,7 @@ goalAnim.prototype.update = function() {
 				this.velX *= 0.9;
 				this.passes++;
 			}
-			if ( this.passes > 5 ) this.stage = 1;
+			if ( this.passes > this.maxPasses ) this.stage = 1;
 			break;	
 		case 1:
 			this.posX = 0.8 * this.posX + 0.2 * (canvas.width / 2);
@@ -57,7 +58,7 @@ goalAnim.prototype.update = function() {
 	}
 }
 
-goalAnim.prototype.render = function( context ) {
+anim1.prototype.render = function( context ) {
 	if ( this.stage < 3 || this.wipeY > -canvasDiagonal ) {
 		context.font = this.style;
 		context.strokeStyle = 'white';
@@ -79,12 +80,14 @@ goalAnim.prototype.render = function( context ) {
 	context.restore();
 }
 
-goalAnim.prototype.loop = function() {
+anim1.prototype.loop = function() {
 	this.update();
 	this.render( context );
 }
 
-function goalKickAnim() {
+function anim2( string ) {
+	this.string = string;
+	
 	this.width = 72 * 4;
 	this.height = 72 + 20;
 
@@ -93,8 +96,6 @@ function goalKickAnim() {
 	
 	this.posX = canvas.width / 2;
 	this.posY = this.bottom;
-	
-	this.string = "GOAL KICK";
 
 	this.velX = 0;
 	this.velY = -50;
@@ -107,7 +108,8 @@ function goalKickAnim() {
 	
 	this.stage = 0;
 	
-	this.wipes = 0;
+	this.passes = 0;
+	this.maxPasses = 2;
 	
 	this.bulge = 0.0;
 	
@@ -117,11 +119,11 @@ function goalKickAnim() {
 	this.wipeStripes = canvasDiagonal / this.stripeWidth + 2;
 }
 
-goalKickAnim.prototype.complete = function() {
+anim2.prototype.complete = function() {
 	this.stage = 3;
 }
  
-goalKickAnim.prototype.update = function() {
+anim2.prototype.update = function() {
 	this.bulge *= 0.7;	
 	
 	switch( this.stage ) {
@@ -130,7 +132,7 @@ goalKickAnim.prototype.update = function() {
 			if ( this.posY < this.middle ) {
 				this.stage = 1;
 				this.bulge = 0.4;
-				this.wipes++;
+				this.passes++;
 				this.posY = this.bottom;
 			}
 			break;
@@ -138,9 +140,9 @@ goalKickAnim.prototype.update = function() {
 			this.posY += this.velY;
 			if ( this.posY < this.middle ) {
 				this.bulge = 0.4;
-				this.wipes++;
+				this.passes++;
 				this.posY = this.bottom;
-				if ( this.wipes > 4 ) this.stage = 2;
+				if ( this.wipes > this.maxPasses ) this.stage = 2;
 			}
 			break;
 		case 2:
@@ -154,7 +156,7 @@ goalKickAnim.prototype.update = function() {
 	}		
 }
 
-goalKickAnim.prototype.render = function( context ) {
+anim2.prototype.render = function( context ) {
 	context.font = this.style;
 	context.lineWidth = 15;	
 	context.fillStyle = 'blue';	
@@ -188,7 +190,7 @@ goalKickAnim.prototype.render = function( context ) {
 	}
 }
 
-goalKickAnim.prototype.loop = function() {
+anim2.prototype.loop = function() {
 	this.update();
 	this.render( context );
 }
