@@ -404,7 +404,7 @@ var menudims = {
 	score: { name: 'score', xPos: 305, yPos: 5, width: 500},
 }
 
-var color1 = 'blue';
+var color1 = 'purple';
 var color2 = 'white';
 var color3 = 'black';
 var color4 = 'green';
@@ -519,12 +519,15 @@ function render() {
 		context.fillRect(355, 5, 440, 24);
 		
 		context.textAlign = 'center';
-		context.font = '24pt bold';
 		context.fillStyle = color2;
 	
-		context.fillText(leftTeam.name + ' ' + leftScore + ' ' +
+		var string = leftTeam.name + ' ' + leftScore + ' ' +
 					text.pad0(Math.floor(time / 60).toString(), 2) + ":" + text.pad0((time % 60).toString(), 2) + ' ' + 
-				 rightTeam.name + ' ' + rightScore, 355 + 440 / 2, 5 + 24);
+				 rightTeam.name + ' ' + rightScore;
+	
+		context.font = '24pt bold';
+	
+		context.fillText(string, 355 + 440 / 2, 5 + 24, 355);
 	
 
 		context.fillStyle = 'red';

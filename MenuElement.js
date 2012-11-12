@@ -29,7 +29,7 @@ MenuElement.prototype.draw = function(context) {
 			else if (this.hovered) context.fillStyle = color3;
 			else context.fillStyle = color2;
 
-			context.fillText(this.title, this.pos.x + this.width / 2, this.pos.y + this.height);
+			context.fillText(this.title, this.pos.x + this.width / 2, this.pos.y + this.height, this.width);
 			break;
 		case 'textbox':
 			context.fillStyle = color3;
@@ -40,7 +40,7 @@ MenuElement.prototype.draw = function(context) {
 			context.font = '24pt bold';
 			context.fillStyle = color2;
 
-			context.fillText(this.title, this.pos.x + this.width / 2, this.pos.y + this.height);
+			context.fillText(this.title, this.pos.x + this.width / 2, this.pos.y + this.height, this.width);
 			break;
 	}
 }
