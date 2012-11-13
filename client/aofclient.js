@@ -57,14 +57,9 @@ var currentRoom = null;
 
 var currentScreen = screen.LIST;
 
-var gamelist = [];
-var elementList = [];
-
 var overlay = null;
 
 var canvas, context;
-
-var canvasDiagonal;
 
 var inDebugMode = false;
 
@@ -274,21 +269,10 @@ $(document).ready(function() {
 	socket.on('list', function(data) {
 		var found;
 		
-		gamelist = [];
-		
+		menu.clearGameList();
+
 		for ( d in data ) {
-			found = false;
-			
-			for (g in gamelist) {
-				if (data[d].id == gamelist[g].id) {
-					found = true;
-					break;
-				}
-			}		
-			if (!found) {
-				console.log("Game: " + data[d]);
-				gamelist.push(data[d]);
-			}		
+			menu.addGame( data[d] );		
 		}
 			
 		menu.refresh();
@@ -398,29 +382,10 @@ function drawField(context) {
 	}
 }
 
-var menudims = {
-	list: { name: 'list', xPos: 0, yPos: 100, width: 500},
-	exitbutton: { name: 'exitbutton', xPos: 5, yPos: 5, width: 300},
-	score: { name: 'score', xPos: 305, yPos: 5, width: 500},
-}
-
-var color1 = 'purple';
-var color2 = 'white';
-var color3 = 'black';
-var color4 = 'green';
-var vScroll = 0;
-var interButtonSpacing = 6;
-var buttonHeight = 24;
 var team1Name = '';
 var team2Name = '';
 
 var menu = new Menu();
-
-var clearChosenEntries = function(name) {
-	for (l in elementList) {
-		if (elementList[l].name == name) elementList[l].chosen = false;
-	}
-}
 
 var switchScreen = function(toScreen) {
 	if (toScreen == screen.LIST) socket.emit('list', null);

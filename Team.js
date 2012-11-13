@@ -9,7 +9,12 @@ var Team = function(name, side) {
 	this.side = side;
 }
 
-var names = [ 'Romans', 'Golden Horde', 'Mongols', 'Cossacks', 'Prussians', 'Spartans', 'Spanish Empire', 'Polish Home Army', 'French Resistance', 'Barbary Corsairs' ]; 
+
+
+
+
+
+var names = [ 'Confederate States of America', 'Golden Horde', 'Dnieper Cossacks', 'Prussians', 'Holy Roman Empire', 'Spanish Empire', 'Polish Home Army', 'French Resistance', 'Barbary Corsairs' ]; 
 
 module.exports.Team = Team;
 module.exports.names = names;
