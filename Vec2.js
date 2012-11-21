@@ -85,6 +85,10 @@ Vec2.prototype.normalize = function() {
 	return this.scale(1.0 / this.length());
 }
 
+Vec2.prototype.distanceTo = function( v ) {
+	return Math.sqrt( ( v.x - this.x ) * ( v.x - this.x ) + (v.y - this.y ) * ( v.y - this.y ) );
+}
+
 Vec2.prototype.rotate = function(a) {
 	var x = this.x;
 	var y = this.y;

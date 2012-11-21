@@ -1,6 +1,14 @@
 var Entity = require("./Entity.js");
 var ACT = require("./Act.js");
+var CALL = require("./Call.js");
 var type = require("./type.js");
+var EnvInfo = require( "./EnvInfo.js" );
+
+var KEYSTATE = {
+	UP : 0,
+	HIT : 1,
+	HELD : 2,
+};
 
 // Kinds of players, will be used for AI (UNIMPLEMENTED)
 var CLASS = {
@@ -27,10 +35,23 @@ var Man = function(pos, side) {
 	this.speed = 0;
 	this.runSpeed = 8;
 	this.topSpeed = 0;
+	this.sprintSpeed = 15;
+	
 	this.class = CLASS.MIDFIELDER;
 	
 	this.hasBall = 	false;
 	this.action  = 	ACT.STAND;
+	this.calling =	CALL.none; 	
+	
+	this.sprinting = false;
+	this.maxStamina = 100;
+	this.stamina = this.maxStamina;
+	this.staminaUse = 2;
+	this.staminaRecovery = 1; 
+	
+	this.behaviors = [];
+	
+	this.envInfo = new EnvInfo();
 }
 
 Man.prototype = new Entity();
@@ -44,14 +65,36 @@ Man.prototype.kick = {
 	state: kickState.idle,
 }
 
+Man.prototype.attemptCall = function(call) {
+	switch( call ) {
+		case CALL.none:
+			this.calling = CALL.none;
+			break;
+		case CALL.pass:
+			this.calling = CALL.pass;
+			break;
+		case CALL.formation:
+		
+			break;	
+	}
+}
+
 Man.prototype.attemptAction = function(action) {
 	if (!ACT.canTransfer(this.action, action)) return;
 
 	switch (action) {
+		case ACT.STAND:
+		
+			break;		
 		case ACT.RUN:
+			this.action = ACT.RUN;
 			this.vel.set( this.faceDir );
-			this.vel.scale( this.speed );
-			this.enforceTopSpeed();
+			if ( this.sprinting && this.stamina > 0 ) {
+				this.vel.scale( this.sprintSpeed );	
+			} else {
+				this.vel.scale( this.runSpeed );	
+			}
+			
 			break;
 		case ACT.KICK:	
 			// Kick		
@@ -69,8 +112,93 @@ Man.prototype.attemptAction = function(action) {
 	}
 }
 
+Man.prototype.setEnvInfoValues = function( params ) {
+	this.envInfo.setValues( params );
+}
+
+Man.prototype.generateBehaviors = function() {
+	this.behaviors = [];
+	
+	var distToBall = this.pos.distanceTo( this.envInfo.ballPos );
+	var distBallToAnchor = this.envInfo.ballPos.distanceTo( this.envInfo.anchorPos );
+	var shouldAttack = !(!this.envInfo.isBallFree && this.envInfo.ballSide == this.side);
+	
+	// Actions
+	if (this.hasBall) {
+		if (distBallToAnchor < this.radius) {
+
+		} else {
+			// If the player has the ball and is near the goal, take a shot
+			this.attemptAction(ACT.KICK);
+		}	
+	} else {
+		if ( shouldAttack ) {
+			if ( distToBall < 100 ) {
+				// If the player is near the ball and his side does not control it, slide tackle toward it
+				this.attemptAction(ACT.SLIDE);
+			} else {
+
+			}
+		}
+	}		
+	
+	// Movement
+	if (this.hasBall) {
+		if ( distBallToAnchor < this.radius) {
+			// If the player has the ball but is out of range, move toward the goal
+			//player.lookAt(goalPos);
+			this.goToward(this.envInfo.goalPos);
+		} else {
+			// If the player has the ball and is in range, aim at the goal
+			this.lookAt(this.envInfo.goalPos);  
+		}	
+	} else {
+		if ( shouldAttack && distBallToAnchor < this.radius) {
+			// If the player does not have the ball and none of his teammates do either and the ball is in range, move toward it
+			//player.lookAt(this.ball.pos);
+			this.goToward(this.envInfo.ballPos);
+		} else {
+			// Otherwise, return to position
+			//player.lookAt(anchorPos);
+			this.goToward(this.envInfo.anchorPos);
+		}					
+	}
+}
+
+Man.prototype.evaluateBehaviors = function() {
+	
+}
+
+Man.prototype.rankBehaviors = function() {
+	
+}
+
+Man.prototype.selectBehavior = function() {
+	
+}
+
+Man.prototype.performBehavior = function() {
+	
+}
+
+Man.prototype.updateState = function() {
+	if ( this.sprinting ) {
+		this.stamina -= this.staminaUse;
+	} else {
+		this.stamina += this.staminaRecovery;	
+	}
+	
+	if ( this.stamina < 0 ) {
+		this.stamina = 0;
+	} 
+	
+	if ( this.stamina > this.maxStamina ) {
+		this.stamina = this.maxStamina;
+	}
+}
+
 Man.prototype.updateAngle = function() {
-	this.angle = Math.atan2(this.vel.y, this.vel.x);
+	this.angle = Math.atan2(this.faceDir.y, this.faceDir.x);
 }
 
 // Enable / disable AI control for a player
@@ -86,7 +214,11 @@ Man.prototype.calcSpeed = function() {
 	this.speed = this.topSpeed;
 }
 
-Man.prototype.inputDirs = function(left, right, up, down) {
+Man.prototype.inputDirs = function(left, right, up, down, ground, air, sprint, pass) {
+	this.vel.zero();
+	
+	if (! ( left || right || up || down ) ) return;
+	
 	this.faceDir.zero();
 	
 	var xDir = 0.0,
@@ -109,23 +241,23 @@ Man.prototype.enforceTopSpeed = function() {
 	if ( speed > this.topSpeed ) this.vel.scale(this.topSpeed / speed);
 }
 
-Man.prototype.inputZ = function( hit ) {
-	if ( hit ) {
-		if (this.hasBall) {
-			this.attemptAction(ACT.KICK);
-		} else {
-			this.attemptAction(ACT.SLIDE);
+Man.prototype.inputZ = function( status ) {
+	if ( status == KEYSTATE.HIT ) { // If the Z key was pressed
+		if (this.hasBall) { // If the player has the ball
+			this.attemptAction(ACT.KICK); // Kick the ball
+		} else { // Otherwise
+			this.attemptAction(ACT.SLIDE); // Slide tackle
 		}
 	} else {
 
 	}
 }
 
-Man.prototype.inputX = function( hit ) {
-	if ( hit ) {
-		if (this.hasBall) {
-			this.attemptAction(ACT.PUNT);
-		} else { 
+Man.prototype.inputX = function( status ) {
+	if ( status == KEYSTATE.HIT ) { // If the X key was pressed
+		if (this.hasBall) { // If the player has the ball
+			this.attemptAction(ACT.PUNT); // Punt the ball
+		} else { // Otherwise
 			
 		}
 	} else {
@@ -133,9 +265,14 @@ Man.prototype.inputX = function( hit ) {
 	}
 }
 
-Man.prototype.inputC = function( hit ) {
-
+Man.prototype.inputC = function( status ) {
+	if ( status == KEYSTATE.HIT || status == KEYSTATE.HELD ) { // If the button is being pressed
+		this.sprinting = true;
+	} else { 
+		this.sprinting = false;
+	}
 }
+
 // Set the "home" position for a player
 Man.prototype.setAnchor = function(anchor, radius) {
 	this.anchor.set(anchor);
@@ -144,29 +281,53 @@ Man.prototype.setAnchor = function(anchor, radius) {
 
 // Turn towards a point on the field
 Man.prototype.lookAt = function(pos) {
-	this.angle = Math.atan2(pos.y - this.pos.y, pos.x - this.pos.x);
-	this.angle = Math.floor((this.angle + Math.PI / 8) / (Math.PI / 4));
-	this.angle *= Math.PI / 4;
+	if ( ACT.canAccelerate( this.action )) {
+		this.angle = Math.atan2(pos.y - this.pos.y, pos.x - this.pos.x);
+		this.angle = Math.floor((this.angle + Math.PI / 8) / (Math.PI / 4));
+		this.angle *= Math.PI / 4;
+		this.faceDir.setValues( Math.cos( this.angle ), Math.sin( this.angle ) );
+	}
 }
 
 // Attempt to move toward a point on the field
 Man.prototype.goToward = function(pos) {
 	if (ACT.canAccelerate(this.action)) {
-		this.vel.set(new Vec2(0, 0));
-
-		if (Math.abs(this.pos.x - pos.x) > this.runSpeed) {
-			if (this.pos.x < pos.x) this.vel.x = this.runSpeed;	
-			if (this.pos.x > pos.x) this.vel.x = -this.runSpeed;
-		} else this.pos.x = pos.x;
-		if (Math.abs(this.pos.y - pos.y) > this.runSpeed) {
-			if (this.pos.y < pos.y) this.vel.y = this.runSpeed;
-			if (this.pos.y > pos.y) this.vel.y = -this.runSpeed;
-		} else this.pos.y = pos.y;
-
-		var absSpeed = this.vel.length();
-
-		if (absSpeed > this.runSpeed) this.vel.scale(this.runSpeed / absSpeed);
+		if ( this.pos.distanceTo( pos ) < this.speed ) {
+			this.lookAt( pos );
+			
+			this.pos.set( pos );
+		} else {
+			this.lookAt( pos );
+				
+			this.attemptAction( ACT.RUN );
+		}
 	}
 }
 
-module.exports = Man;
+Man.prototype.frictionCoefficient = 1.0; // Coefficient of static friction
+
+Man.prototype.applyPhysics = function() {
+	
+	// Apply static friction
+	var frictionForce = new Vec2(0, 0);
+	frictionForce.set( this.vel ); 
+	frictionForce.normalize();
+	frictionForce.scale( -this.frictionCoefficient ); // Static friction works against velocity
+
+	var currentSpeed = this.vel.length();
+
+	if ( currentSpeed > this.frictionCoefficient ) this.vel.add( frictionForce );
+	else {
+		if ( this.action == ACT.SLIDE ) this.action = ACT.STAND;
+		this.vel.zero();
+	}
+
+	this.pos.add( this.vel );
+	this.speed = this.vel.length();	
+
+	// Recalculate drawing values
+	this.updateAngle();
+	this.updateCenter();	
+}
+
+module.exports = Man;[]

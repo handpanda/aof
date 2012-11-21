@@ -10,9 +10,9 @@ clientBall.prototype.draw = function( context ) {
 		context.translate(this.pos.x, this.pos.y);
 		context.save();
 			context.beginPath();
-			context.strokeStyle = this.type.color;
+			if (this.side == 'left') context.strokeStyle = 'blue';
+			if (this.side == 'right') context.strokeStyle = 'red';
 			context.lineWidth = this.width / 3;
-			context.fillStyle = this.type.color;
 			context.scale(1 - this.z, 1 - this.z);
 			context.arc( 0, 0, this.width / 6, 0, Math.PI * 2, false);
 			//context.fillRect(0, 0, this.width, this.height);

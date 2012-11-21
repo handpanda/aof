@@ -8,6 +8,7 @@ var Field = require('./Field.js');
 var Ball = require('./Ball.js');
 var Man = require('./Man.js');
 var ACT = require('./Act.js');
+var CALL = require('./Call.js');
 
 // Initial game id
 var gameid = Math.floor(Math.random() * 1000);
@@ -50,7 +51,7 @@ var Game = function(team1, team2) {
 	this.ballHolder = null;
 
 	// The ball
-	this.ball = new Ball(new Vec2(dims.fieldLength / 2 - type.ball.width / 2, dims.fieldWidth / 2 - type.ball.height / 2));
+	this.ball = new Ball(new Vec2(dims.fieldLength / 2 - type.ball.width / 2, dims.fieldWidth / 2 - type.ball.height / 2), 'none');
 }
 
 /*
@@ -80,7 +81,7 @@ Game.prototype.addAIPlayers = function( hPlayers, vPlayers ) {
 		for (c = 0; c < hPlayers; c++) {
 			var player = new Man(new Vec2(fieldL + (c + 1) * fieldW / (hPlayers + 2), fieldT + (r + 1) * fieldH / (vPlayers + 2)), (c < hPlayers / 2) ? 'left' : 'right' );
 			player.enableAuto();
-			player.setAnchor(player.pos, dims.fieldWidth / 4);
+			player.setAnchor(player.pos, dims.fieldWidth / 3);
 
 			this.players.push(player);
 		}	
@@ -140,6 +141,8 @@ Game.prototype.react = function(e) {
 	case Event.prototype.TYPE.THROWIN:
 		if (this.ballHolder != null) this.ballHolder.hasBall = false;
 		this.ballHolder = null;
+		this.stopGame(e);
+		this.startGame();
 		break;
 	case Event.prototype.TYPE.ENDOFGAME:
 		this.stopGame( e );
@@ -155,6 +158,9 @@ Game.prototype.react = function(e) {
 */
 Game.prototype.complete = function(e) {
 	this.addPacket( 'eventComplete', e, 0 ); 
+	
+	this.ball.vel.zero();
+	this.ball.pos.set( this.ball.inboundPos );
 	
 	switch (e.type) {
 	case Event.prototype.TYPE.GOAL:
@@ -185,6 +191,8 @@ Game.prototype.updateTime = function() {
 	update game state
 */
 Game.prototype.update = function() {
+	this.updatePacketQueue();
+	
 	if ( this.stopTimer > 0 ) {
 		this.stopTimer--;
 	}
@@ -192,101 +200,61 @@ Game.prototype.update = function() {
 
 	if ( this.state == Game.prototype.STATE.INPROGRESS && this.data.time > GAME_LENGTH_SECS ) this.react( new Event( '', Event.prototype.TYPE.ENDOFGAME ) );
 
-	this.updatePlayers();
+	// See if the ball has caused any events on the field		
+	if ( !this.data.stopped ) {
+		if ( e = this.gamefield.interact( this.ball ) ) this.react( e );
+	}
+	
+	if ( !this.data.stopped ) this.updatePlayers();
 	
 	this.updateBall();
+
+	if ( !this.data.stopped ) this.updateBallHolder();
 }
 
 /* 
 	Update each player 
 */
 Game.prototype.updatePlayers = function() {
-	var pf = 1.0;
+	for (p in this.players) {
+		var player = this.players[p];
 
-	if ( !this.data.stopped ) {
-		for (p in this.players) {
-			var player = this.players[p];
+		// AI player control
+		if (player.isAuto) {
 
-			// AI player control
-			if (player.isAuto) {
+			// Determine what the player "sees"
+			var newAnchorPos = player.anchor.plus(this.ball.pos.minus(player.anchor).scale(0.50)); // "Home" position
+			var newGoalPos;			
 
-				var distToBall = (this.ball.pos.minus(player.pos)).length(); // Distance to ball
-				var anchorPos = player.anchor.plus(this.ball.pos.minus(player.anchor).scale(0.20)); // "Home" position
-
-				// Location of the goal
-				var goalPos;
-				switch (player.side) {
-					case 'left': goalPos = this.gamefield.rightGoal.center; break;
-					case 'right': goalPos = this.gamefield.leftGoal.center; break;
-				}
-
-				// Actions
-				if (player.hasBall) {
-					if ((this.ball.pos.minus(anchorPos)).length() < player.radius) {
-
-					} else {
-						// If the player has the ball and is near the goal, take a shot
-						player.attemptAction(ACT.KICK);
-					}	
-				} else {
-					if (!(this.ballHolder != null && this.ballHolder.side == player.side)) {
-						if (distToBall < 100) {
-							// If the player is near the ball and his side does not control it, slide tackle toward it
-							if (!(this.ballHolder != null && this.ballHolder.side == player.side)) player.attemptAction(ACT.SLIDE);
-						} else {
-
-						}
-					}
-				}
-
-				// Movement
-				if (player.hasBall) {
-					if ((this.ball.pos.minus(anchorPos)).length() < player.radius) {
-						// If the player has the ball but is out of range, move toward the goal
-						player.lookAt(goalPos);
-						player.goToward(goalPos);
-					} else {
-						// If the player has the ball and is in range, aim at the goal
-						player.lookAt(goalPos);  
-					}	
-				} else {
-						if (!(this.ballHolder != null && this.ballHolder.side == player.side) && (this.ball.pos.minus(anchorPos)).length() < player.radius) {
-							// If the player does not have the ball and none of his teammates do either and the ball is in range, move toward it
-							player.lookAt(this.ball.pos);
-							player.goToward(this.ball.pos);
-						} else {
-							// Otherwise, return to position
-							player.lookAt(anchorPos);
-							player.goToward(anchorPos);
-						}					
-				}				
+			switch (player.side) { 
+				case 'left': newGoalPos = this.gamefield.rightGoal.center; break; // Goal Location
+				case 'right': newGoalPos = this.gamefield.leftGoal.center; break;
 			}
+			
+			var newBallPos = this.ball.pos // Ball position
+			var newBallSide = this.ball.side; // Who has possession of the ball
+			var newIsBallFree = ( this.ballHolder == null );
 
-			// Physics
+			var envInfoValues = {	anchorPos: 	newAnchorPos,
+									goalPos: 	newGoalPos,
+									ballPos:	newBallPos,
+									isBallFree: newIsBallFree,
+									ballSide: 	newBallSide, 										
+								};
+		
+			player.setEnvInfoValues( envInfoValues );
 
-			// Static friction
-			var friction = new Vec2(0, 0);
-			friction.set( player.vel );
-			friction.normalize();
-			friction.scale(-pf);
-
-			// Enforce top speed
-			var speed = player.vel.length();
-
-			if (speed > pf) player.updateAngle();
-
-			if (speed < pf && player.action == ACT.SLIDE) player.action = ACT.STAND;
-
-			if (speed > pf) player.vel.add( friction );
-			else player.vel.zero();
-
-			player.pos.add( player.vel );
-			player.speed = player.vel.length();	
-
-			// Recalculate angles
-			player.update();
+			player.generateBehaviors();
+			player.evaluateBehaviors();	
+			player.rankBehaviors();
+			player.selectBehavior();
+			player.performBehavior();
 		}
-	}	
+
+		player.updateState();
+
+		player.applyPhysics();
+	}
 }
 
 /*
@@ -307,16 +275,27 @@ Game.prototype.removePlayer = function(player) {
 	Move the ball
 */
 Game.prototype.updateBall = function() {
+	
+	// Set which side has possession
+	if ( this.ballHolder != null ) this.ball.side = this.ballHolder.side;
+	
 	var bf = 0.6;
+	if ( this.data.stopped ) bf = 1.5;
 
 	// Static friction
 	var friction = new Vec2(0, 0);
 	friction.set(this.ball.vel);
 	friction.normalize();
 	friction.scale(-bf);
-	
-	if (this.ball.z == 0) this.ball.vel.add(friction);
 
+	// Enforce top speed
+	var speed = this.ball.vel.length();
+
+	if ( this.ball.z == 0 ) {
+		if (speed > bf) this.ball.vel.add( friction );
+		else this.ball.vel.zero();
+	}
+	
 	this.ball.pos.add(this.ball.vel);
 	this.ball.speed = this.ball.vel.length();	
 	if (this.ball.speed > bf) this.ball.angle = Math.atan2(this.ball.vel.y, this.ball.vel.x)
@@ -329,7 +308,7 @@ Game.prototype.updateBall = function() {
 		this.ball.velZ += 0.002;
 	}
 
-	this.ball.update();
+	this.ball.updateCenter();
 }
 
 /*

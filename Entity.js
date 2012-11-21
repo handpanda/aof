@@ -41,11 +41,9 @@ var Entity = function(pos, objtype, side) {
 }
 
 // Update reference values for the object
-Entity.prototype.update = function() {
+Entity.prototype.updateCenter = function() {
 	this.center.x =  this.pos.x + this.width / 2;
 	this.center.y =  this.pos.y + this.height / 2;
-	this.faceDir.x = Math.cos(this.angle);
-	this.faceDir.y = Math.sin(this.angle);	
 }
 
 // Check for overlap with another object (both are modeled as rectangles with (x, y) in the top left corner)

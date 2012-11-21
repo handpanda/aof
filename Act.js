@@ -1,21 +1,30 @@
 var ACT = {
 	STAND: 0,
 	RUN: 1,
-	KICK: 2,
-	SLIDE: 3,
-	PUNT: 4,
+	SPRINT: 2,
+	KICK: 3,
+	SLIDE: 4,
+	PUNT: 5,
 
-	ACTIONS: 5, // Total number of actions
+	ACTIONS: 6, // Total number of actions
 
+	/*
+	 * NEW ACTIONS NEED TO BE ADDED TO SWITCH STATEMENTS IN:
+	 * 
+	 * 	clientMan.draw() in clientMan.js
+	 *  Man.attemptAction() in Man.js
+	 */
+	
 	
 	// Can a player doing action A switch to action B?
-	// from:	STAND	RUN	KICK	SLIDE	PUNT
-	transfer: [	true, 	true, 	true, 	true,	true,  // to:	STAND
-		   	true, 	true, 	true, 	false,  true,  // 	RUN
-		   	true, 	true, 	false, 	false,	false, //	KICK
-		   	true, 	true, 	false, 	false,	false, // 	SLIDE
-			true,	true,	false,  false,  false, //	PUNT
-								],
+	// from:	STAND	SPRINT	RUN		KICK	SLIDE	PUNT
+	transfer: [	true, 	true,	true, 	true, 	true,	true,  // to:	STAND
+		   		true, 	true,	true, 	true, 	false,  true,  // 		RUN
+		   		true, 	true,	true, 	true, 	false,  true,  // 		SPRINT
+		   		true, 	true,	true, 	false, 	false,	false, //		KICK
+		   		true, 	true,	true, 	false, 	false,	false, // 		SLIDE
+				true,	true,	true,	false,  false,  false, //		PUNT
+																],
 
 	canTransfer: function(fromaction, toaction) {
 		return ACT.transfer[fromaction + toaction * ACT.ACTIONS];
@@ -26,6 +35,7 @@ var ACT = {
 		switch (action) {
 		case ACT.STAND:
 		case ACT.RUN:
+		case ACT.SPRINT:
 		case ACT.KICK:
 			return true;
 		case ACT.SLIDE:

@@ -5,35 +5,28 @@ var http = require('http');
 	path = require('path');
 
 // Command line options and defaults	
-var argv = require('optimist').argv;
-			
-var hPlayers = 4,
-	vPlayers = 2,
-	inDebugMode = false,
-	isLocal = false;
-
-if ( argv.h ) hPlayers = argv.h;
-if ( argv.v ) vPlayers = argv.v;
-if ( argv.debug ) inDebugMode = true;
-if ( argv.local ) isLocal = true;
+var argv = require('optimist')
+					.default('h', 4)
+					.default('v', 2)
+					.default('debug', false)
+					.default('local', false)
+					.argv;
+					
+var hPlayers = argv.h,
+	vPlayers = argv.v,
+	inDebugMode = argv.debug,
+	isLocal = argv.local;
 
 var Vec2 = require('./Vec2.js');
 var Entity = require('./Entity.js');
 var discrete = require('./discrete.js');
 var team = require('./Team.js');
-var field = require('./Field.js');
 var Event = require('./Event.js');
 var Lobby = require('./Lobby.js');
 var Game = require('./Game.js');
 var Man = require('./Man.js');
 var ACT = require('./Act.js');
 var KEY = require('./keyboard.js');
-
-var KEYSTATE = {
-	UP : 0,
-	HIT : 1,
-	HELD : 2,
-};
 
 var MAX_LATENCY = 50; // milliseconds
 
@@ -84,7 +77,6 @@ sio.sockets.on('connection', function(client) {
 
 	client.game = null;
 	client.player = null;
-	client.waiting = false;
 	
 	console.log('Client joined from ' + client.handshake.address.address + ":" + client.handshake.address.port + " (" + client.ident + ")");
 
@@ -211,28 +203,24 @@ sio.sockets.on('connection', function(client) {
 	client.on('input', function(data) {
 		if (client.player != null) {
 			if (ACT.canAccelerate(client.player.action)) {
-				client.player.calcSpeed();
-				
 				client.player.inputDirs(data.left, data.right, data.up, data.down);	
 			}
 
-			client.player.inputZ( data.z == KEYSTATE.HIT );
-			client.player.inputX( data.x == KEYSTATE.HIT );
-			client.player.inputC( data.c == KEYSTATE.HELD );
+			client.player.inputZ( data.z );
+			client.player.inputX( data.x );
+			client.player.inputC( data.c );
 		}
 	});
 	
 	client.on('debuginput', function(data) {
 		if (client.player != null) {
 			if (ACT.canAccelerate(client.player.action)) {
-				client.player.calcSpeed();
-				
 				client.player.inputDirs(data[KEY.LEFT], data[KEY.RIGHT], data[KEY.UP], data[KEY.DOWN]);	
 			}
 
-			client.player.inputZ( data[KEY.Z] == KEYSTATE.HIT );
-			client.player.inputX( data[KEY.X] == KEYSTATE.HIT );
-			client.player.inputC( data[KEY.C] == KEYSTATE.HELD );
+			client.player.inputZ( data[KEY.Z] );
+			client.player.inputX( data[KEY.X] );
+			client.player.inputC( data[KEY.C] );
 		}
 		
 		if (data[KEY.E] == KEYSTATE.HIT) {
@@ -263,31 +251,7 @@ function update() {
 	for (g in lobby.games) {
 		var ga = lobby.games[g];	
 
-		if (ga != null) {
-			ga.updatePacketQueue();
-
-			ga.update();
-
-			// See if the ball has caused any events on the field
-			if (e = ga.gamefield.interact(ga.ball)) {
-				ga.react(e);
-
-				switch (e.type) {
-				case Event.prototype.TYPE.GOAL:
-
-					break;
-				case Event.prototype.TYPE.GOALKICK:
-				case Event.prototype.TYPE.THROWIN:
-				case Event.prototype.TYPE.CORNERKICK:
-
-					break;
-				default:
-					console.log('Field gave unknown event type');
-				}
-			}
-
-			ga.updateBallHolder();	
-		}
+		if ( ga != null ) ga.update();
 	}
 
 	// Send game data to clients

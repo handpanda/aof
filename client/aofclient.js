@@ -128,6 +128,8 @@ $(document).ready(function() {
 			players[players.length - 1].id = data.id;
 			players[players.length - 1].grab(data);
 		}
+		
+		//console.log(data);
 	});
 
 	socket.on('kill', function(data) {
@@ -338,6 +340,8 @@ function drawField(context) {
 	var offset = new Vec2(0, 0);
 
 	var target;
+	var border = 20;
+	var staminaBarWidth = 20;
 
 	if (clientPlayer != null) target = clientPlayer.pos;
 	else target = new Vec2(canvas.width / 2, canvas.height / 2);
@@ -376,9 +380,22 @@ function drawField(context) {
 			for (p in players) {
 				players[p].draw(context);
 			}
-
 			if (ball != null) ball.draw(context);
+			
+			for (z in zones) {
+				zones[z].drawOverlay(context);
+			}
 		context.restore();
+		
+		// Stamina bar
+		if ( clientPlayer != null ) {
+			console.log( clientPlayer.stamina );	
+				
+			context.fillStyle = 'red';
+			context.fillRect( border, canvas.height - border - staminaBarWidth, canvas.width - border * 2, staminaBarWidth );
+			context.fillStyle = 'blue';
+			context.fillRect( border, canvas.height - border - staminaBarWidth, clientPlayer.stamina / 100 * ( canvas.width - border * 2 ), staminaBarWidth );
+		}
 	}
 }
 

@@ -1,12 +1,18 @@
 var Entity = require('./Entity.js');
 var type = require("./type.js");
 
-var Ball = function(pos, objtype, side) {
+var Ball = function(pos, side) {
 	Entity.call( this, pos, type.Ball, side );
+	
+	this.inboundPos = new Vec2( 0, 0 );
 }
 
 Ball.prototype = new Entity();
 Ball.prototype.constructor = Ball;
+
+Ball.setPossession = function( side ) {
+	this.side = side;
+}
 
 // Bounce off some other object
 Ball.prototype.bounce = function(otherObject) {

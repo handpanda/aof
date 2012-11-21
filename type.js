@@ -4,7 +4,7 @@ var dims = require("./dims.js");
 var type = {
 	player    : { name: 'player', width: 40  , height: 40, color: 'white' },
 	ball      : { name: 'ball', width: 25  , height: 25, color: 'white' },
-	field     : { name: 'field', width: dims.fieldLength, height: dims.fieldWidth, color: 'green' },
+	field     : { name: 'field', width: dims.fieldLength, height: dims.fieldWidth, color: 'rgb(83, 155, 38)' },
 	sideline  : { name: 'sideline', width: dims.fieldLength - dims.sidelineWidth / 2, height: dims.sidelineWidth, color: 'blue' },
 	backline  : { name: 'backline', width: dims.backlineWidth, height: dims.fieldWidth, color: 'red' },
 	goal      : { name: 'goal', width: dims.goalDepth , height: dims.goalWidth, color: 'yellow' },

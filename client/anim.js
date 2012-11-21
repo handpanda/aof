@@ -1,5 +1,18 @@
+/*
+ * anim.js
+ * 
+ * Transition animations
+ * 
+ */
+
+/*
+ * anim1
+ * 
+ * string flies past several times, then a sweep from the bottom right
+ * 
+ */
 function anim1( string ) {
-	this.string = string;
+	this.string = string; // The string to display
 	
 	this.width = 72 * 4;
 	this.height = 72 + 20;
