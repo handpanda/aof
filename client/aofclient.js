@@ -389,8 +389,6 @@ function drawField(context) {
 		
 		// Stamina bar
 		if ( clientPlayer != null ) {
-			console.log( clientPlayer.stamina );	
-				
 			context.fillStyle = 'red';
 			context.fillRect( border, canvas.height - border - staminaBarWidth, canvas.width - border * 2, staminaBarWidth );
 			context.fillStyle = 'blue';
@@ -492,6 +490,9 @@ function render() {
 		for (p in players) {
 			if (players[p].id == playerid && playerid > 0) clientPlayer = players[p];
 		}
+
+		canvas.width = window.innerWidth * 0.9;
+		canvas.height = window.innerHeight * 0.9;
 
 		drawField(context);
 
