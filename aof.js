@@ -130,19 +130,8 @@ sio.sockets.on('connection', function(client) {
 		var p = client.game.players;
 
 		client.game.players.push(player);
-
-		client.send('You are player ' + client.ident);
-
+		
 		client.game.gamefield.newPlayerPosition(player);
-
-		switch (player.side) {
-			case 'left':
-				client.send('You are on the ' + client.game.team1.name + ' (' + player.side + ' side)');
-				break;	
-			case 'right':
-				client.send('You are on the ' + client.game.team2.name + ' (' + player.side + ' side)');
-				break;
-		}
 
 		client.emit('debugMode', inDebugMode);
 		client.emit('playerid', client.playerid);
@@ -209,6 +198,7 @@ sio.sockets.on('connection', function(client) {
 			client.player.inputZ( data.z );
 			client.player.inputX( data.x );
 			client.player.inputC( data.c );
+			client.player.inputV( data.v );
 		}
 	});
 	
@@ -221,6 +211,7 @@ sio.sockets.on('connection', function(client) {
 			client.player.inputZ( data[KEY.Z] );
 			client.player.inputX( data[KEY.X] );
 			client.player.inputC( data[KEY.C] );
+			client.player.inputV( data[KEY.V] );
 		}
 		
 		if (data[KEY.E] == KEYSTATE.HIT) {

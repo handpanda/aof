@@ -44,6 +44,7 @@ var Man = function(pos, side) {
 	this.calling =	CALL.none; 	
 	
 	this.sprinting = false;
+	this.calling = false;
 	this.maxStamina = 100;
 	this.stamina = this.maxStamina;
 	this.staminaUse = 2;
@@ -119,38 +120,25 @@ Man.prototype.setEnvInfoValues = function( params ) {
 Man.prototype.generateBehaviors = function() {
 	this.behaviors = [];
 	
+	this.envInfo.targets.sort( function( a, b ) {
+		return (a.priority - b.priority);
+	});
+	
+	var targetPos = this.envInfo.targets[0].pos;
 	var distToBall = this.pos.distanceTo( this.envInfo.ballPos );
 	var distBallToAnchor = this.envInfo.ballPos.distanceTo( this.envInfo.anchorPos );
+	var distToTarget = this.pos.distanceTo( targetPos );
 	var shouldAttack = !(!this.envInfo.isBallFree && this.envInfo.ballSide == this.side);
-	
-	// Actions
-	if (this.hasBall) {
-		if (distBallToAnchor < this.radius) {
-
-		} else {
-			// If the player has the ball and is near the goal, take a shot
-			this.attemptAction(ACT.KICK);
-		}	
-	} else {
-		if ( shouldAttack ) {
-			if ( distToBall < 100 ) {
-				// If the player is near the ball and his side does not control it, slide tackle toward it
-				this.attemptAction(ACT.SLIDE);
-			} else {
-
-			}
-		}
-	}		
 	
 	// Movement
 	if (this.hasBall) {
 		if ( distBallToAnchor < this.radius) {
 			// If the player has the ball but is out of range, move toward the goal
 			//player.lookAt(goalPos);
-			this.goToward(this.envInfo.goalPos);
+			this.goToward(targetPos);
 		} else {
 			// If the player has the ball and is in range, aim at the goal
-			this.lookAt(this.envInfo.goalPos);  
+			this.lookAt(targetPos);  
 		}	
 	} else {
 		if ( shouldAttack && distBallToAnchor < this.radius) {
@@ -163,6 +151,29 @@ Man.prototype.generateBehaviors = function() {
 			this.goToward(this.envInfo.anchorPos);
 		}					
 	}
+	
+// Actions
+	if (this.hasBall) {
+		if (distToTarget < this.radius ) {
+			this.attemptAction(ACT.KICK);
+		} else {
+			if (distBallToAnchor < this.radius) {
+	
+			} else {
+				// If the player has the ball and is near the goal, take a shot
+				this.attemptAction(ACT.KICK);
+			}	
+		}
+	} else {
+		if ( shouldAttack ) {
+			if ( distToBall < 100 ) {
+				// If the player is near the ball and his side does not control it, slide tackle toward it
+				this.attemptAction(ACT.SLIDE);
+			} else {
+
+			}
+		}
+	}			
 }
 
 Man.prototype.evaluateBehaviors = function() {
@@ -273,6 +284,14 @@ Man.prototype.inputC = function( status ) {
 	}
 }
 
+Man.prototype.inputV = function( status ) {
+	if ( status == KEYSTATE.HIT || status == KEYSTATE.HELD ) { // If the button is being pressed
+		this.calling = true;
+	} else { 
+		this.calling = false;
+	}
+}
+
 // Set the "home" position for a player
 Man.prototype.setAnchor = function(anchor, radius) {
 	this.anchor.set(anchor);
@@ -292,7 +311,7 @@ Man.prototype.lookAt = function(pos) {
 // Attempt to move toward a point on the field
 Man.prototype.goToward = function(pos) {
 	if (ACT.canAccelerate(this.action)) {
-		if ( this.pos.distanceTo( pos ) < this.speed ) {
+		if ( this.pos.distanceTo( pos ) < this.runSpeed ) {
 			this.lookAt( pos );
 			
 			this.pos.set( pos );

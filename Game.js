@@ -78,7 +78,7 @@ Game.prototype.addAIPlayers = function( hPlayers, vPlayers ) {
 
 	// Create AI players for each team
 	for (r = 0; r < vPlayers; r++) {
-		for (c = 0; c < hPlayers; c++) {
+		for (c = hPlayers / 2; c < hPlayers; c++) {
 			var player = new Man(new Vec2(fieldL + (c + 1) * fieldW / (hPlayers + 2), fieldT + (r + 1) * fieldH / (vPlayers + 2)), (c < hPlayers / 2) ? 'left' : 'right' );
 			player.enableAuto();
 			player.setAnchor(player.pos, dims.fieldWidth / 3);
@@ -216,6 +216,16 @@ Game.prototype.update = function() {
 	Update each player 
 */
 Game.prototype.updatePlayers = function() {
+	var callingPlayers = [];
+	
+	for (p in this.players) {
+		var player = this.players[p];
+		
+		if ( player.calling ) {
+			callingPlayers.push( player );
+		}
+	}
+	
 	for (p in this.players) {
 		var player = this.players[p];
 
@@ -223,7 +233,8 @@ Game.prototype.updatePlayers = function() {
 		if (player.isAuto) {
 
 			// Determine what the player "sees"
-			var newAnchorPos = player.anchor.plus(this.ball.pos.minus(player.anchor).scale(0.50)); // "Home" position
+			var anchorOffset = this.ball.pos.minus(player.anchor);
+			var newAnchorPos = player.anchor.plus(new Vec2( anchorOffset.x * 0.50, 0 )); // "Home" position
 			var newGoalPos;			
 
 			switch (player.side) { 
@@ -234,12 +245,23 @@ Game.prototype.updatePlayers = function() {
 			var newBallPos = this.ball.pos // Ball position
 			var newBallSide = this.ball.side; // Who has possession of the ball
 			var newIsBallFree = ( this.ballHolder == null );
+			var newTargets = [];
+			
+			newTargets.push( { pos: newGoalPos, priority: player.pos.distanceTo( newGoalPos ) } );
+
+			for ( c in callingPlayers ) {
+				var callingPlayer = callingPlayers[c]; 
+				
+				if ( callingPlayer.side == player.side ) {
+					newTargets.push( { pos: callingPlayer.pos, priority: callingPlayer.pos.distanceTo( newGoalPos ) } );
+				}
+			}
 
 			var envInfoValues = {	anchorPos: 	newAnchorPos,
-									goalPos: 	newGoalPos,
 									ballPos:	newBallPos,
 									isBallFree: newIsBallFree,
-									ballSide: 	newBallSide, 										
+									ballSide: 	newBallSide,
+									targets:	newTargets,						
 								};
 		
 			player.setEnvInfoValues( envInfoValues );
@@ -321,7 +343,7 @@ Game.prototype.updateBallHolder = function() {
 	for (p in this.players) {
 		var player = this.players[p];
 
-		if (this.ball.z == 0 && player.action == ACT.SLIDE && player.overlaps(this.ball) && !(this.ballholder != null && player.speed < this.ballholder.speed)) {
+		if (this.ball.z == 0 && player.action == ACT.SLIDE && player.overlaps(this.ball) && !(this.ballholder != null && player.speed < this.ballholder.speed && this.ballholder.side == player.side)) {
 			if (this.ballHolder != null) this.ballHolder.hasBall = false;
 			this.ballHolder = player;
 			player.hasBall = true;

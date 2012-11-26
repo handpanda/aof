@@ -6,6 +6,7 @@ var keys = {
 	z     : false,
 	x     : false,
 	c     : false,
+	v	  : false,
 }
 
 var regularImage = function(filename) {
@@ -66,8 +67,6 @@ var inDebugMode = false;
 $(document).ready(function() {
 	canvas = document.getElementById("main");
 	context = canvas.getContext("2d");
-
-	canvasDiagonal = Math.sqrt( canvas.width * canvas.width + canvas.height * canvas.height );
 
 	socket = new io.connect("http://localhost:4000");
 	var entry_el = $('#entry');
@@ -234,28 +233,37 @@ $(document).ready(function() {
 		gameStopped = data.stopped;
 		gameEvent = data.event;
 
+		// Primary animation color
+		var color;
+
 		if ( overlay == null && gameEvent != null && gameEvent.type == Event.prototype.TYPE.GOAL ) {
-			overlay = new anim1( "GOAL" );
+			if ( gameEvent.side == 'left' ) color = 'blue';
+			if ( gameEvent.side == 'right' ) color = 'red';
+			overlay = new anim1( "GOAL", color );
 		}
 
 		if ( overlay == null && gameEvent != null && gameEvent.type == Event.prototype.TYPE.GOALKICK ) {
-			overlay = new anim2( "GOAL KICK" );
+			if ( gameEvent.side == 'left' ) color = 'blue';
+			if ( gameEvent.side == 'right' ) color = 'red';
+			overlay = new anim2( "GOAL KICK", color );
 		}
 		if ( overlay != null && !gameStopped ) {
 			overlay.complete();
 		}
 		
 		if ( overlay == null && gameEvent != null && gameEvent.type == Event.prototype.TYPE.ENDOFGAME ) {
+			color = 'black';
+			
 			if ( leftScore == rightScore ) {
-				overlay = new anim1( "DRAW" );
+				overlay = new anim1( "DRAW", color );
 			} else {
 				var winner;
 				
 				if ( leftScore > rightScore ) winner = 'left';
 				else winner = 'right';
 					
-				if ( clientPlayer.side == winner ) overlay = new anim1( "WIN" );
-				else overlay = new anim1( "LOSE" );
+				if ( clientPlayer.side == winner ) overlay = new anim1( "WIN", color );
+				else overlay = new anim1( "LOSE", color );
 			}
 		}
 	});
@@ -331,6 +339,13 @@ function updateKeys() {
 	keys.z = keyboardState[KEY.Z];
 	keys.x = keyboardState[KEY.X];
 	keys.c = keyboardState[KEY.C];
+	keys.v = keyboardState[KEY.V];
+}
+
+function updateCanvas() {
+	canvas.width = window.innerWidth * 0.9;
+	canvas.height = window.innerHeight * 0.9;
+	canvasDiagonal = Math.sqrt( canvas.width * canvas.width + canvas.height * canvas.height );
 }
 
 function drawField(context) {
@@ -490,9 +505,8 @@ function render() {
 		for (p in players) {
 			if (players[p].id == playerid && playerid > 0) clientPlayer = players[p];
 		}
-
-		canvas.width = window.innerWidth * 0.9;
-		canvas.height = window.innerHeight * 0.9;
+		
+		updateCanvas();
 
 		drawField(context);
 
@@ -511,10 +525,6 @@ function render() {
 		context.font = '24pt bold';
 	
 		context.fillText(string, 355 + 440 / 2, 5 + 24, 355);
-	
-
-		context.fillStyle = 'red';
-		context.fillText('Player Count: ' + players.length, 0, 100);
 		break;
 	case screen.RESULT:
 

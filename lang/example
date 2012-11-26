@@ -1,0 +1,20 @@
+gather location ballPosition;
+gather man ballCarrier;
+gather man self;
+gather location goalPosition;
+
+define stat anger as 0;
+define stat exhaustion as 0.0;
+define distance distToBall as 0;
+define distance distBallToAnchor as 0;
+
+wonder (ballCarrier is self) {
+	wonder (distBallToAnchor < radius) {
+			do KICK;
+	} else {
+		do STAND;
+	};
+} else {
+	do STAND;
+};
+

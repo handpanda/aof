@@ -1,5 +1,5 @@
 var EnvInfo = function( params ) {
-	this.goalPos = new Vec2( 0, 0 );
+	this.targets = [];
 	this.anchorPos = new Vec2( 0, 0 );
 	this.ballPos = new Vec2( 0, 0 );
 	this.isBallFree = false;
