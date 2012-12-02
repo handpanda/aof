@@ -6,17 +6,8 @@ var keys = {
 	z     : false,
 	x     : false,
 	c     : false,
-	v	  : false,
 }
 
-var regularImage = function(filename) {
-		this.image = new Image();
-		this.image.src = filename;
-}
-
-regularImage.prototype.draw = function(context, posX, posY, width) {
-	context.drawImage(this.image, posX, posY, width, this.image.height * width / this.image.width);
-}
 /*
 var imgRoman1 = new regularImage("./roman1.png");
 var imgRoman2 = new regularImage("./roman2.png");
@@ -54,19 +45,16 @@ var time = 0;
 var gameStopped = false;
 var gameEvent = null;
 
-var currentRoom = null;
+var scrollBox = null;
 
 var currentScreen = screen.LIST;
 
 var overlay = null;
 
-var canvas, context;
-
 var inDebugMode = false;
 
 $(document).ready(function() {
-	canvas = document.getElementById("main");
-	context = canvas.getContext("2d");
+	scrollBox = new AOFScrollBox();
 
 	socket = new io.connect("http://localhost:4000");
 	var entry_el = $('#entry');
@@ -108,8 +96,10 @@ $(document).ready(function() {
 	});
 
 	socket.on('currentRoom', function(data) {
-		if (currentRoom == null) currentRoom = new Room(new Vec2(0, 0), 0, 0);
-		currentRoom.grab(data);
+		if ( scrollBox != null ) {
+			if (scrollBox.getCurrentRoom() == null) scrollBox.setCurrentRoom( new Room(new Vec2(0, 0), 0, 0) );
+			scrollBox.grabCurrentRoom(data);
+		}
 	});
 
 	socket.on('player', function(data) {
@@ -233,37 +223,28 @@ $(document).ready(function() {
 		gameStopped = data.stopped;
 		gameEvent = data.event;
 
-		// Primary animation color
-		var color;
-
 		if ( overlay == null && gameEvent != null && gameEvent.type == Event.prototype.TYPE.GOAL ) {
-			if ( gameEvent.side == 'left' ) color = 'blue';
-			if ( gameEvent.side == 'right' ) color = 'red';
-			overlay = new anim1( "GOAL", color );
+			overlay = new anim1( "GOAL", 'red', scrollBox );
 		}
 
 		if ( overlay == null && gameEvent != null && gameEvent.type == Event.prototype.TYPE.GOALKICK ) {
-			if ( gameEvent.side == 'left' ) color = 'blue';
-			if ( gameEvent.side == 'right' ) color = 'red';
-			overlay = new anim2( "GOAL KICK", color );
+			overlay = new anim2( "GOAL KICK", 'blue', scrollBox );
 		}
 		if ( overlay != null && !gameStopped ) {
 			overlay.complete();
 		}
 		
 		if ( overlay == null && gameEvent != null && gameEvent.type == Event.prototype.TYPE.ENDOFGAME ) {
-			color = 'black';
-			
 			if ( leftScore == rightScore ) {
-				overlay = new anim1( "DRAW", color );
+				overlay = new anim1( "DRAW", 'black', scrollBox );
 			} else {
 				var winner;
 				
 				if ( leftScore > rightScore ) winner = 'left';
 				else winner = 'right';
 					
-				if ( clientPlayer.side == winner ) overlay = new anim1( "WIN", color );
-				else overlay = new anim1( "LOSE", color );
+				if ( clientPlayer.side == winner ) overlay = new anim1( "WIN", 'black', scrollBox );
+				else overlay = new anim1( "LOSE", 'black', scrollBox );
 			}
 		}
 	});
@@ -285,7 +266,7 @@ $(document).ready(function() {
 			menu.addGame( data[d] );		
 		}
 			
-		menu.refresh();
+		menu.refresh( scrollBox );
 	});		
 
 	socket.emit('ready', null);
@@ -319,12 +300,18 @@ function mouseMoveHandler(event) {
 		mousePos.y = event.clientY + document.body.scrollTop; 
 	} 
 
-	mousePos.x -= canvas.offsetLeft;
-	mousePos.y -= canvas.offsetTop;
+	mousePos.x -= scrollBox.canvas.offsetLeft;
+	mousePos.y -= scrollBox.canvas.offsetTop;
 }
 
 function mouseDownHandler(event) {
 	mousedown = true;
+	
+	menu.onMouseHit();
+}
+
+function mouseUpdater() {
+	mousedown = false;
 }
 
 function mouseUpHandler(event) {
@@ -339,18 +326,13 @@ function updateKeys() {
 	keys.z = keyboardState[KEY.Z];
 	keys.x = keyboardState[KEY.X];
 	keys.c = keyboardState[KEY.C];
-	keys.v = keyboardState[KEY.V];
-}
-
-function updateCanvas() {
-	canvas.width = window.innerWidth * 0.9;
-	canvas.height = window.innerHeight * 0.9;
-	canvasDiagonal = Math.sqrt( canvas.width * canvas.width + canvas.height * canvas.height );
 }
 
 function drawField(context) {
 	// If room is smaller than screen area, center the view on the room
 	// Otherwise, center the view on the player, unless the edge of the room has been reached
+
+	if ( scrollBox == null ) return;
 
 	var offset = new Vec2(0, 0);
 
@@ -359,56 +341,39 @@ function drawField(context) {
 	var staminaBarWidth = 20;
 
 	if (clientPlayer != null) target = clientPlayer.pos;
-	else target = new Vec2(canvas.width / 2, canvas.height / 2);
+	else if ( ball != null) target = ball.pos;
+	else target = new Vec2(0, 0);
 
-	if (currentRoom != null) {
-		if (currentRoom.width < canvas.width) {
-			offset.x = canvas.width / 2 - currentRoom.width / 2;
-		} else {
-			offset.x = currentRoom.pos.x - target.x + canvas.width / 2;
+	scrollBox.centerOn( target.x, target.y );
 
-			if (offset.x > 0) offset.x = 0;
-			if (offset.x < -currentRoom.width + canvas.width) offset.x = -currentRoom.width + canvas.width;
+	context.save();
+		context.translate( -scrollBox.hScroll, -scrollBox.vScroll );
+
+		for (z in zones) {
+			zones[z].draw(context);
 		}
-
-		if (currentRoom.height < canvas.height) {
-			offset.y = canvas.height / 2 - currentRoom.height / 2;
-		} else {
-			offset.y = currentRoom.pos.y - target.y + canvas.height / 2;
-
-			if (offset.y > 0) offset.y = 0;
-			if (offset.y < -currentRoom.height + canvas.height) offset.y = -currentRoom.height + canvas.height;			
-		}
-
-		context.save();
-			context.translate(offset.x, offset.y);
-
-			for (z in zones) {
-				zones[z].draw(context);
-			}
 /*
 			imgTopLeft.draw(context, 0, dims.fieldWidth / 2 - dims.goalWidth / 2 - imgTopLeft.image.height * dims.backlineWidth / imgTopLeft.image.width, dims.backlineWidth);
 			imgBottomLeft.draw(context, 0, dims.fieldWidth / 2 + dims.goalWidth / 2, dims.backlineWidth);
 			imgTopRight.draw(context, dims.fieldLength - dims.backlineWidth, dims.fieldWidth / 2 - dims.goalWidth / 2 - imgTopRight.image.height * dims.backlineWidth / imgTopRight.image.width, dims.backlineWidth);
 			imgBottomRight.draw(context, dims.fieldLength - dims.backlineWidth, dims.fieldWidth / 2 + dims.goalWidth / 2, dims.backlineWidth);
 */
-			for (p in players) {
-				players[p].draw(context);
-			}
-			if (ball != null) ball.draw(context);
-			
-			for (z in zones) {
-				zones[z].drawOverlay(context);
-			}
-		context.restore();
-		
-		// Stamina bar
-		if ( clientPlayer != null ) {
-			context.fillStyle = 'red';
-			context.fillRect( border, canvas.height - border - staminaBarWidth, canvas.width - border * 2, staminaBarWidth );
-			context.fillStyle = 'blue';
-			context.fillRect( border, canvas.height - border - staminaBarWidth, clientPlayer.stamina / 100 * ( canvas.width - border * 2 ), staminaBarWidth );
+		for (p in players) {
+			players[p].draw(context);
 		}
+		if (ball != null) ball.draw(context);
+		
+		for (z in zones) {
+			zones[z].drawOverlay(context);
+		}
+	context.restore();
+	
+	// Stamina bar
+	if ( clientPlayer != null ) {
+		context.fillStyle = 'red';
+		context.fillRect( border, scrollBox.viewportH - border - staminaBarWidth, scrollBox.viewportW - border * 2, staminaBarWidth );
+		context.fillStyle = 'blue';
+		context.fillRect( border, scrollBox.viewportH - border - staminaBarWidth, clientPlayer.stamina / 100 * ( scrollBox.viewportW - border * 2 ), staminaBarWidth );
 	}
 }
 
@@ -422,7 +387,7 @@ var switchScreen = function(toScreen) {
 
 	currentScreen = toScreen;
 
-	menu.refresh();
+	menu.refresh( scrollBox );
 }
 
 var attemptToJoinGame = function(id) {
@@ -461,15 +426,23 @@ var updateInterval;
 function update() {
 	if ( overlay != null ) socket.emit( 'waiting', null );
 
-	menu.update();
+	menu.update( scrollBox );
 
 	render();
+	
+	mouseUpdater();
+}
+
+function getGameStatusString() {
+	return leftTeam.name + ' ' + leftScore + ' ' +
+			text.pad0(Math.floor(time / 60).toString(), 2) + ":" + text.pad0((time % 60).toString(), 2) + ' ' + 
+			rightTeam.name + ' ' + rightScore;
 }
 
 function render() {
-	context.clearRect(0, 0, canvas.width, canvas.height);
-	context.beginPath();	document.onkeydown = keyDownHandler;
-	document.onkeyup = keyUpHandler;
+	scrollBox.clearCanvas();
+
+	context = scrollBox.getContext();
 
 	switch (currentScreen) {
 	case screen.TITLE:
@@ -484,7 +457,8 @@ function render() {
 		
 		menu.draw( context );
 		break;
-	case screen.NEWGAME:
+	case screen.NEWGAMETEAM1:
+	case screen.NEWGAMETEAM2:
 		context.font = "24px bold";
 		
 		context.textAlign = 'left';
@@ -505,26 +479,12 @@ function render() {
 		for (p in players) {
 			if (players[p].id == playerid && playerid > 0) clientPlayer = players[p];
 		}
-		
-		updateCanvas();
+
+		scrollBox.calcValues();
 
 		drawField(context);
 
 		menu.draw( context );
-		context.fillStyle = color1;
-
-		context.fillRect(355, 5, 440, 24);
-		
-		context.textAlign = 'center';
-		context.fillStyle = color2;
-	
-		var string = leftTeam.name + ' ' + leftScore + ' ' +
-					text.pad0(Math.floor(time / 60).toString(), 2) + ":" + text.pad0((time % 60).toString(), 2) + ' ' + 
-				 rightTeam.name + ' ' + rightScore;
-	
-		context.font = '24pt bold';
-	
-		context.fillText(string, 355 + 440 / 2, 5 + 24, 355);
 		break;
 	case screen.RESULT:
 
@@ -536,3 +496,6 @@ function render() {
 		if ( overlay.removeThis ) overlay = null;
 	}
 }
+
+document.onkeydown = keyDownHandler;
+document.onkeyup = keyUpHandler;

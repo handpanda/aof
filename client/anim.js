@@ -8,14 +8,22 @@
  *  color - the primary color to use
  * 
  */
-function anim1( string, color ) {
+function anim1( string, color, scrollBox ) {
 	this.string = string; // The string to display
 	
 	this.width = 72 * 4; // Width of the text
 	this.height = 72 + 20; // Height of the text
 	
-	this.posX = canvas.width; // Horizontal position of the text
-	this.posY = canvas.height / 2 - this.height / 2; // Vertical position of the text 
+	this.textStartX = scrollBox.viewportW;
+	this.textEndX = scrollBox.viewportW / 2;
+	
+	this.posX = this.textStartX; // Horizontal position of the text
+	this.posY = scrollBox.viewportH / 2 - this.height / 2; // Vertical position of the text 
+	
+	this.bottom = scrollBox.viewportH;
+	this.right = scrollBox.viewportW;
+	
+	this.diagonalDistance = scrollBox.canvasDiagonal;
 	
 	this.velX = -300; // Horizontal velocity of the text 
 	this.velY = 0; // Vertical velocity of the text
@@ -32,7 +40,7 @@ function anim1( string, color ) {
 	this.wipeY = 0; // Vertical position of the wipe (rotated 45 degrees counterclockwise)
 	this.wipeYVel = -130; // Vertical velocity of the wipe
 	this.stripeWidth = 40; // Stripe thickness, in pixels 
-	this.wipeStripes = canvasDiagonal / this.stripeWidth + 2; // Enough stripes to fill the screen diagonally
+	this.wipeStripes = this.diagonalDistance / this.stripeWidth + 2; // Enough stripes to fill the screen diagonally
 
 	this.stage = 0; // Which part of the animation we are on
 }
@@ -50,7 +58,7 @@ anim1.prototype.update = function() {
 			
 			// Wrap the text horizontally
 			if (this.posX < -this.width) {
-				this.posX = canvas.width;
+				this.posX = this.textStartX;
 				this.velX *= 0.9;
 				this.passes++;
 			}
@@ -63,12 +71,12 @@ anim1.prototype.update = function() {
 		// Stage 1: Text stops in the middle of the screen	
 		case 1:
 			// Slide towards the center 
-			this.posX = 0.8 * this.posX + 0.2 * (canvas.width / 2);
+			this.posX = 0.8 * this.posX + 0.2 * this.textEndX;
 			
 			// If we're at the center, go to the next stage
-			if ( Math.abs( this.posX - canvas.width / 2 ) < 10 ) {
+			if ( Math.abs( this.posX - this.textEndX) < 10 ) {
 				this.stage = 2;
-				this.posX = canvas.width / 2;
+				this.posX = this.textEndX;
 			}
 			
 			break;
@@ -80,7 +88,7 @@ anim1.prototype.update = function() {
 			this.wipeY += this.wipeYVel;
 			
 			// Wrap the wipe so it looks like it's going on forever
-			while ( this.wipeY < -canvasDiagonal - this.stripeWidth * 2 ) this.wipeY += this.stripeWidth * 2;
+			while ( this.wipeY < -this.diagonalDistance - this.stripeWidth * 2 ) this.wipeY += this.stripeWidth * 2;
 			
 			break;
 			
@@ -91,14 +99,14 @@ anim1.prototype.update = function() {
 			this.wipeY += this.wipeYVel;
 			
 			// If the wipe has moved completely off-screen, end the animation
-			if ( this.wipeY < -canvasDiagonal * 2 ) this.removeThis = true;
+			if ( this.wipeY < -this.diagonalDistance * 2 ) this.removeThis = true;
 			
 			break;
 	}
 }
 
 anim1.prototype.render = function( context ) {
-	if ( this.stage < 3 || this.wipeY > -canvasDiagonal ) {
+	if ( this.stage < 3 || this.wipeY > -this.diagonalDistance ) {
 		context.font = this.style;
 		context.strokeStyle = 'white';
 		context.lineWidth = 15;
@@ -106,15 +114,16 @@ anim1.prototype.render = function( context ) {
 		context.fillStyle = this.color;
 		context.fillText( this.string, this.posX, this.posY );
 	}
+	
 	context.save();
-	context.translate( canvas.width, canvas.height );
+	context.translate( this.right, this.bottom );
 	context.rotate( -Math.PI / 4 );
-	context.translate( -canvasDiagonal, 0);
+	context.translate( -this.diagonalDistance, 0);
 	for ( var y = 0; y < this.wipeStripes; y++ ) {
 		if ( y % 2 ) context.fillStyle = this.color;
 		else context.fillStyle = 'white';
 
-		context.fillRect( 0, this.wipeY + y * this.stripeWidth, canvasDiagonal * 2, this.stripeWidth);
+		context.fillRect( 0, this.wipeY + y * this.stripeWidth, this.diagonalDistance * 2, this.stripeWidth);
 	}
 	context.restore();
 }
@@ -124,18 +133,23 @@ anim1.prototype.loop = function() {
 	this.render( context );
 }
 
-function anim2( string, color ) {
+function anim2( string, color, scrollBox ) {
 	this.color = color;
 	this.string = string;
 	
 	this.width = 72 * 4;
 	this.height = 72 + 20;
 
-	this.middle = canvas.height / 2 + this.height / 2;
-	this.bottom = canvas.height + 120;
+	this.textStartX = scrollBox.viewportW / 2;
+	this.textEndX = scrollBox.viewportW / 2;
+
+	this.middle = scrollBox.viewportH / 2 + this.height / 2;
+	this.bottom = scrollBox.viewportH + 120;
 	
-	this.posX = canvas.width / 2;
+	this.posX = this.textStartX;
 	this.posY = this.bottom;
+
+	this.diagonalDistance = scrollBox.canvasDiagonal;
 
 	this.velX = 0;
 	this.velY = -50;
@@ -156,7 +170,7 @@ function anim2( string, color ) {
 	this.wipeY = 0;
 	this.wipeYVel = -130;
 	this.stripeWidth = 40;
-	this.wipeStripes = canvasDiagonal / this.stripeWidth + 2;
+	this.wipeStripes = this.diagonalDistance / this.stripeWidth + 2;
 }
 
 anim2.prototype.complete = function() {
@@ -187,11 +201,11 @@ anim2.prototype.update = function() {
 			break;
 		case 2:
 			this.wipeY += this.wipeYVel;
-			while ( this.wipeY < -canvasDiagonal - this.stripeWidth * 2 ) this.wipeY += this.stripeWidth * 2;
+			while ( this.wipeY < -this.diagonalDistance - this.stripeWidth * 2 ) this.wipeY += this.stripeWidth * 2;
 			break;
 		case 3:
 			this.wipeY += this.wipeYVel;
-			if ( this.wipeY < -canvasDiagonal * 2 ) this.removeThis = true;
+			if ( this.wipeY < -this.diagonalDistance * 2 ) this.removeThis = true;
 			break;
 	}		
 }
@@ -202,7 +216,7 @@ anim2.prototype.render = function( context ) {
 	context.fillStyle = this.color;	
 	context.strokeStyle = 'white';
 	
-	if ( this.stage > 0 && ( this.stage < 3 || this.wipeY > -canvasDiagonal)) {
+	if ( this.stage > 0 && ( this.stage < 3 || this.wipeY > -this.diagonalDistance)) {
 		context.save();
 			context.translate( this.posX, this.middle );
 			context.scale( 1.0 + this.bulge, 1.0 + this.bulge );
@@ -216,14 +230,14 @@ anim2.prototype.render = function( context ) {
 	} else {
 		if ( this.stage >= 2 ) {
 			context.save();
-				context.translate( 0, canvas.height );
+				context.translate( 0, this.bottom );
 				context.rotate( Math.PI / 4 );
-				context.translate( -canvasDiagonal, 0);
+				context.translate( -this.diagonalDistance, 0);
 				for ( var y = 0; y < this.wipeStripes; y++ ) {
 					if ( y % 2 ) context.fillStyle = this.color;
 				else context.fillStyle = 'white';
 				
-					context.fillRect( 0, this.wipeY + y * this.stripeWidth, canvasDiagonal * 2, this.stripeWidth);
+					context.fillRect( 0, this.wipeY + y * this.stripeWidth, this.diagonalDistance * 2, this.stripeWidth);
 				}
 			context.restore();
 		}

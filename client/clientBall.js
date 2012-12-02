@@ -14,6 +14,8 @@ clientBall.prototype.draw = function( context ) {
 			if (this.side == 'right') context.strokeStyle = 'red';
 			context.lineWidth = this.width / 3;
 			context.scale(1 - this.z, 1 - this.z);
+			
+			// x, y, radius, start angle, end angle, clockwise?
 			context.arc( 0, 0, this.width / 6, 0, Math.PI * 2, false);
 			//context.fillRect(0, 0, this.width, this.height);
 			context.stroke();

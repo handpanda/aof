@@ -1,6 +1,6 @@
 /*
 
-	clientclientEntity.js - client-side entities 
+	clientEntity.js - client-side entities 
 	
 */
 
