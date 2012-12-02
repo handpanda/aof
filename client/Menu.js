@@ -1,5 +1,5 @@
 var menudims = {
-	list: { name: 'list', xPos: 0, yPos: 100, width: 500},
+	list: { name: 'list', xPos: 0, yPos: 0, width: 500},
 	exitbutton: { name: 'exitbutton', xPos: 5, yPos: 5, width: 300},
 	score: { name: 'score', xPos: 305, yPos: 5, width: 500},
 }
@@ -9,12 +9,22 @@ var Menu = function() {
 	this.gameList = [];
 	this.vScroll = 0;
 	this.interButtonSpacing = 6;
-	this.buttonHeight = 24;
+	
+	this.buttonStyle = {};
+	this.statusString = "";
+	
+	this.buttonStyle.fontSize = 18;
+	this.buttonStyle.font = this.buttonStyle.fontSize + 'pt bold';
+	this.buttonStyle.cornerRadius = 6;
+	this.buttonStyle.width = menudims.list.width;
+	this.buttonStyle.height = this.buttonStyle.fontSize + this.buttonStyle.cornerRadius * 2;
+	
+	this.y = 0;
 }
 
 Menu.prototype.clearChosenEntries = function(name) {
 	for (l in this.elementList) {
-		if (this.elementList[l].name == name) this.elementList[l].chosen = false;
+		if (this.elementList[l].nameMatches( name ) ) this.elementList[l].chosen = false;
 	}
 }
 
@@ -26,7 +36,7 @@ Menu.prototype.addGame = function( game ) {
 	var found = false;
 			
 	for (g in this.gameList) {
-		if (game.id == gameList[g].id) {
+		if (game.id == this.gameList[g].id) {
 			found = true;
 			break;
 		}
@@ -37,39 +47,38 @@ Menu.prototype.addGame = function( game ) {
 	}
 }
 
-Menu.prototype.update = function() {
+Menu.prototype.addListElement = function( elementType, internalName, displayName, data, func ) {
+	this.elementList.push(new MenuElement(	elementType,
+											internalName, 
+											displayName, 
+											new Vec2(menudims.list.xPos, this.y), 
+											this.buttonStyle,
+											data, 
+											func ) );
+											
+	this.y += this.buttonStyle.height + this.interButtonSpacing;											
+}
+
+Menu.prototype.update = function( scrollBox ) {
 	for (l in this.elementList) {
 		var elem = this.elementList[l];
 
-		var hovered = false;
-		var selected = false;
-
-		if (mousePos.x >= elem.pos.x && mousePos.x <= elem.pos.x + elem.width &&
-			mousePos.y >= elem.pos.y && mousePos.y <= elem.pos.y + elem.height) {
-			hovered = true;
-			if (mousedown) {
-				selected = true;
-			}
-		}
-
-		switch (elem.type) {
-			case 'button':
-				if (selected == true && elem.selected == false) elem.doAction();
-				break;
-			case 'textbox':
-
-				break;
-		}
-		
-		elem.hovered = hovered;
-		elem.selected = selected;
+		elem.update( scrollBox );
 	}
 }
 
+Menu.prototype.onMouseHit = function( ) {
+	for (l in this.elementList) {
+		var elem = this.elementList[l];
 
-Menu.prototype.refresh = function() {
+		elem.onMouseHit();
+	}	
+}
+
+Menu.prototype.refresh = function( scrollBox ) {
 	this.elementList = [];
-	
+	this.y = menudims.list.yPos + this.vScroll;
+
 	console.log('refresh');
 	console.log(this.gameList.length);
 	
@@ -78,95 +87,119 @@ Menu.prototype.refresh = function() {
 			console.log('title');
 			break;
 		case screen.LIST:
-			console.log('list');
-			var y = menudims.list.yPos + this.vScroll;
+			this.addListElement( 'spacer', '', '', { }, null );
+			this.addListElement( 'spacer', '', '', { }, null );
+			this.addListElement( 'spacer', '', '', { }, null );
 
+			console.log('list');
+
+			this.addListElement( 'title', 'title', 'AGE OF FOOTBALL', { }, null );
+			
+			this.addListElement( 'spacer', '', '', { }, null );
+			
+			this.addListElement( 'button', 'howto', 'How to Play', { }, function() {
+				
+				
+			});
+			
+			// Button to make a new game
+			this.addListElement( 'button', 'new game', 'New Game', { },
+						function() {
+							switchScreen(screen.NEWGAMETEAM1);
+						});
+
+			this.addListElement( 'spacer', '', '', { }, null );
+			
+			this.addListElement( 'textbox', 'listtitle', 'Join a Game', { }, null );
+			
 			// List of games in progress
 			for (g in this.gameList) {
-				console.log(this.gameList[g]);
-				this.elementList.push(new MenuElement('button', 'game', this.gameList[g].team1Name + ' vs ' + this.gameList[g].team2Name, new Vec2(menudims.list.xPos, y), menudims.list.width, this.buttonHeight, 
-							{ id: this.gameList[g].id },
+				this.addListElement( 'button', 'game', this.gameList[g].team1Name + ' vs ' + this.gameList[g].team2Name, { id: this.gameList[g].id },
 							function() {
+								console.log( "button press");
 								attemptToJoinGame( this.data.id );
-							})
-						);
-				y += this.buttonHeight + this.interButtonSpacing;
+							});
 			}
-
-			// Button to make a new game
-			this.elementList.push(new MenuElement('button', 'new game', 'New Game', new Vec2(menudims.list.xPos, y), menudims.list.width, this.buttonHeight,
-						{ },
-						function() {
-							switchScreen(screen.NEWGAME);
-						})
-					);
 			break;
-		case screen.NEWGAME:
+		case screen.NEWGAMETEAM1:
 			console.log('new game');
-			var y = menudims.list.yPos + this.vScroll;
 			
 			var menu = this;
 			
-			this.elementList.push(new MenuElement('textbox', 'team1', 'Team 1:', new Vec2(menudims.list.xPos, y), menudims.list.width, this.buttonHeight, { }, null));
-			y += this.buttonHeight + this.interButtonSpacing;	
+			this.addListElement( 'textbox', 'team1', 'Team 1:', { }, null);
 
 			for (n in names) {
-				console.log(names[n]);
-				this.elementList.push(new MenuElement('button', 'team1', names[n], new Vec2(menudims.list.xPos, y), menudims.list.width, this.buttonHeight,
+				this.addListElement( 'button', 'team1', names[n],
 							{ },
 							function() {
-								team1Name = this.title;
+								team1Name = this.displayName;
 								menu.clearChosenEntries('team1');
 								this.chosen = true;
-							})
-						);
-				y += this.buttonHeight + this.interButtonSpacing;	
+							});
 			}
+			
+			this.addListElement( 'spacer', '', '', { }, null );
+			this.addListElement( 'button', 'next', 'Next',
+						{ },
+						function() {
+							switchScreen( screen.NEWGAMETEAM2 );
+						});
+			
+			break;
+		case screen.NEWGAMETEAM2:
 
-			y += this.buttonHeight + this.interButtonSpacing;	
+			var menu = this;
 
-			this.elementList.push(new MenuElement('textbox', 'team2', 'Team 2:', new Vec2(menudims.list.xPos, y), menudims.list.width, this.buttonHeight, { }, null));
-			y += this.buttonHeight + this.interButtonSpacing;				
+			this.addListElement('textbox', 'team2', 'Team 2:', { }, null);		
 
 			for (n in names) {
 				console.log(names[n]);
-				this.elementList.push(new MenuElement('button', 'team2', names[n], new Vec2(menudims.list.xPos, y), menudims.list.width, this.buttonHeight, 
+				this.addListElement('button', 'team2', names[n],
 							{ },
 							function() {
-								team2Name = this.title;
+								team2Name = this.displayName;
 								menu.clearChosenEntries('team2');
 								this.chosen = true;
-							})
-						);
-				y += this.buttonHeight + this.interButtonSpacing;	
+							});
 			}
-
-			y += this.buttonHeight + this.interButtonSpacing;	
-
-			this.elementList.push(new MenuElement('button', 'start', 'Start!', new Vec2(menudims.list.xPos, y), menudims.list.width, this.buttonHeight,
-						{ },
-						function() {
-							attemptToAddGame(team1Name, team2Name);	
-						})
-					);
-			y += this.buttonHeight + this.interButtonSpacing;		
+			this.addListElement( 'spacer', '', '', { }, null );
+			this.addListElement( 'button', 'start', 'Start!',
+				{ },
+				function() {
+					attemptToAddGame(team1Name, team2Name);	
+				});
 
 			break;	
 		case screen.GAME:
 			console.log('game');
-			this.elementList.push(new MenuElement('button', 'exit', 'Back to Lobby', new Vec2(menudims.exitbutton.xPos, menudims.exitbutton.yPos),
-						menudims.exitbutton.width, 24, 
-						{ },
-						function() {
-							leaveGame();
-						})
-					); 
+			this.addListElement( 'button', 'exit', 'Back to Lobby',
+				{ },
+				function() {
+					leaveGame();
+				});
+			this.addListElement( 'textbox', 'status', '',
+				{ },
+				function() {
+					this.displayName = getGameStatusString();
+				});
 			break;
 	}
+	
+	this.update( scrollBox );
+}
+
+Menu.prototype.setStatusString = function( string ) {
+	this.statusString = string;
 }
 
 Menu.prototype.draw = function( context ) {
+	context.font = this.buttonStyle.font;
+	
+	context.save();
+	
 	for (l in this.elementList) {
 		this.elementList[l].draw(context);
 	}
+	
+	context.restore();
 }
