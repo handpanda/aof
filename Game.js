@@ -352,8 +352,8 @@ Game.prototype.updateBallHolder = function() {
 
 	// Pick the ball up
 	if (this.ballHolder != null) {
-		this.ball.pos.x = this.ballHolder.center.x + this.ballHolder.faceDir.x * 30;
-		this.ball.pos.y = this.ballHolder.center.y + this.ballHolder.faceDir.y * 30;
+		this.ball.pos.x = this.ballHolder.pos.x + this.ballHolder.faceDir.x * 30;
+		this.ball.pos.y = this.ballHolder.pos.y + this.ballHolder.faceDir.y * 30;
 	} else {
 		for (p in this.players) {
 			var player = this.players[p];

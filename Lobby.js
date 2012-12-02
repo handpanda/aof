@@ -39,4 +39,15 @@ Lobby.prototype.addRandomGame = function() {
 	this.addGame(leftTeamName, rightTeamName);		
 }
 
+Lobby.prototype.getClientGameList = function() {
+	// Make a list of the games currently happening
+	var gameList = [];
+	
+	for (g in this.games) {
+		gameList.push( this.games[g].getClientData() );
+	} 	
+	
+	return gameList;
+}
+
 module.exports = Lobby;

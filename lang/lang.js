@@ -69,8 +69,8 @@ parse: function parse(input) {
     var symbol, preErrorSymbol, state, action, a, r, yyval = {}, p, len, newState, expected;
     while (true) {
         state = stack[stack.length - 1];
-        if (this.defaultActions[state]) {
-            action = this.defaultActions[state];
+        if (this.style.Actions[state]) {
+            action = this.style.Actions[state];
         } else {
             if (symbol === null || typeof symbol == "undefined") {
                 symbol = lex();

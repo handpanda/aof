@@ -80,29 +80,29 @@ sio.sockets.on('connection', function(client) {
 	
 	console.log('Client joined from ' + client.handshake.address.address + ":" + client.handshake.address.port + " (" + client.ident + ")");
 
+	// Client wants the list of active games
 	client.on('list', function(data) {
 		console.log('/list/: ' + 'Client ' + client.ident + ' requested game list' );
 		
-		var gameList = [];
-		
-		for (g in lobby.games) {
-			gameList.push( lobby.games[g].getClientData() );
-		} 
-		
-		client.emit( 'list', gameList );
+		client.emit( 'list', lobby.getClientGameList() );
 	});
 
+	// Client wants to add a game
 	client.on('addgame', function(data) {
 		console.log('/addgame/: ' + 'Client ' + client.ident + ' requested to add game: ' + data.team1 + ' v ' + data.team2 );		
 		
 		var id = lobby.addGame( data.team1, data.team2 );
+		
+		client.broadcast.emit( 'list', lobby.getClientGameList() );
 	});
 
+	// Client wants to join a game
 	client.on('join', function(data) {
 		var msg = '/join/: ' + 'Client ' + client.ident + ' attempted to join game ' + data + '..';
 
 		client.game = null;
 
+		// Try and find the game the client wants
 		for (g in lobby.games) {
 			if (lobby.games[g].id == data) {
 				client.game = lobby.games[g];
@@ -148,6 +148,7 @@ sio.sockets.on('connection', function(client) {
 		client.emit('ready', null);
 	});
 
+	// Client wants to leave a game
 	client.on('leave', function(data) {
 		if (client.game == null) {
 			console.log('/leave/: ' + ' Client ' + client.ident + ' is not in any game');
@@ -170,25 +171,14 @@ sio.sockets.on('connection', function(client) {
 		}
 	});
 
-	client.on('message', function(data) {
-		console.log('/message/: ' + data);
-
-		if (!username) {
-			username = data;
-			client.send('message', 'Your name is ' + username + '\n');
-			return;
-		}	
-	
-		client.emit('message', username + ': ' + data);		
-		client.broadcast.emit('message', username + ': ' + data);
-	});
-
+	// Client is ready to go
 	client.on('ready', function(data) {
 		console.log('/ready/: ' + 'Client ' + client.ident + ' has joined' );
 		
 		client.emit('ready', null);
 	});
 
+	// Regular mode input takes key presses from the player
 	client.on('input', function(data) {
 		if (client.player != null) {
 			if (ACT.canAccelerate(client.player.action)) {
@@ -202,6 +192,7 @@ sio.sockets.on('connection', function(client) {
 		}
 	});
 	
+	// Debug mode input takes all keys from the player
 	client.on('debuginput', function(data) {
 		if (client.player != null) {
 			if (ACT.canAccelerate(client.player.action)) {
@@ -221,6 +212,7 @@ sio.sockets.on('connection', function(client) {
 		}
 	});	
 
+	// Client responds to ping
 	client.on('polo', function(data) {
 		client.latency = client.msecsSinceLastPing;
 		if (client.player != null) client.player.latency = client.latency;
@@ -255,12 +247,20 @@ function update() {
 			// Send game data 
 			if (client.game != null) {
 
+				// Game data consistst of:
+	
+				// Each player
 				for (p in client.game.players) {
 					client.emit('player', client.game.players[p]);
 				}
 
+				// Score, any recent events
 				client.emit('gameData', client.game.data);
+				
+				// Ball location
 				client.emit('ball', client.game.ball);
+				
+				// Any queued packets
 				client.game.sendPackets( client );
 			
 				if ( client.game.removeThis ) client.game = null;

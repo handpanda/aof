@@ -3,8 +3,9 @@ var screen = {
 	LIST: 1,
 	HOWTO: 2,
 	GAME: 3,
-	NEWGAME: 4,
-	RESULT: 5,
+	NEWGAMETEAM1: 4,
+	NEWGAMETEAM2: 5,
+	RESULT: 6,
 };
 
 module.exports = screen;
