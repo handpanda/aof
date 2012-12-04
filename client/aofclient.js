@@ -56,7 +56,7 @@ var inDebugMode = false;
 $(document).ready(function() {
 	scrollBox = new AOFScrollBox();
 
-	socket = new io.connect("http://localhost:4000");
+	socket = new io.connect("http://134.84.147.167:4000");
 	var entry_el = $('#entry');
 
 	socket.on('message', function(data) {
@@ -365,6 +365,16 @@ function drawField(context) {
 		
 		for (z in zones) {
 			zones[z].drawOverlay(context);
+		}
+		
+		if ( clientPlayer != null ) {
+			context.globalAlpha = 0.5;
+			context.strokeStyle = 'orange';
+			context.lineWidth = 20;
+			context.beginPath();
+			context.arc(clientPlayer.pos.x, clientPlayer.pos.y, 50, 0, Math.PI * 2, false);
+			context.stroke();
+			context.globalAlpha = 1.0;
 		}
 	context.restore();
 	

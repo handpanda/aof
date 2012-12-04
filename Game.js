@@ -78,7 +78,7 @@ Game.prototype.addAIPlayers = function( hPlayers, vPlayers ) {
 
 	// Create AI players for each team
 	for (r = 0; r < vPlayers; r++) {
-		for (c = hPlayers / 2; c < hPlayers; c++) {
+		for (c = 0; c < hPlayers; c++) {
 			var player = new Man(new Vec2(fieldL + (c + 1) * fieldW / (hPlayers + 2), fieldT + (r + 1) * fieldH / (vPlayers + 2)), (c < hPlayers / 2) ? 'left' : 'right' );
 			player.enableAuto();
 			player.setAnchor(player.pos, dims.fieldWidth / 3);

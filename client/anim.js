@@ -106,6 +106,8 @@ anim1.prototype.update = function() {
 }
 
 anim1.prototype.render = function( context ) {
+	context.textAlign = 'center';
+	
 	if ( this.stage < 3 || this.wipeY > -this.diagonalDistance ) {
 		context.font = this.style;
 		context.strokeStyle = 'white';
@@ -211,6 +213,8 @@ anim2.prototype.update = function() {
 }
 
 anim2.prototype.render = function( context ) {
+	context.textAlign = 'center';
+	
 	context.font = this.style;
 	context.lineWidth = 15;	
 	context.fillStyle = this.color;	
