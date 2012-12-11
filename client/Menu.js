@@ -48,15 +48,19 @@ Menu.prototype.addGame = function( game ) {
 }
 
 Menu.prototype.addListElement = function( elementType, internalName, displayName, data, func ) {
-	this.elementList.push(new MenuElement(	elementType,
+	var elem = new MenuElement(	elementType,
 											internalName, 
 											displayName, 
 											new Vec2(menudims.list.xPos, this.y), 
 											this.buttonStyle,
 											data, 
-											func ) );
+											func );
+										
+	this.elementList.push( elem );
 											
-	this.y += this.buttonStyle.height + this.interButtonSpacing;											
+	this.y += this.buttonStyle.height + this.interButtonSpacing;
+	
+	return elem;											
 }
 
 Menu.prototype.update = function( scrollBox ) {
@@ -78,6 +82,8 @@ Menu.prototype.onMouseHit = function( ) {
 Menu.prototype.refresh = function( scrollBox ) {
 	this.elementList = [];
 	this.y = menudims.list.yPos + this.vScroll;
+	
+	var textbox;
 
 	console.log('refresh');
 	console.log(this.gameList.length);
@@ -110,7 +116,8 @@ Menu.prototype.refresh = function( scrollBox ) {
 
 			this.addListElement( 'spacer', '', '', { }, null );
 			
-			this.addListElement( 'textbox', 'listtitle', 'Join a Game', { }, null );
+			textbox = this.addListElement( 'textbox', 'listtitle', 'Join a Game', { }, null );
+			textbox.style.fill = 'white';
 			
 			// List of games in progress
 			for (g in this.gameList) {
@@ -126,7 +133,8 @@ Menu.prototype.refresh = function( scrollBox ) {
 			
 			var menu = this;
 			
-			this.addListElement( 'textbox', 'team1', 'Team 1:', { }, null);
+			textbox = this.addListElement( 'textbox', 'team1', 'Team 1:', { }, null);
+			textbox.style.fill = 'white';
 
 			for (n in names) {
 				this.addListElement( 'button', 'team1', names[n],
@@ -150,7 +158,8 @@ Menu.prototype.refresh = function( scrollBox ) {
 
 			var menu = this;
 
-			this.addListElement('textbox', 'team2', 'Team 2:', { }, null);		
+			textbox = this.addListElement('textbox', 'team2', 'Team 2:', { }, null);	
+			textbox.style.fill = 'white';	
 
 			for (n in names) {
 				console.log(names[n]);
@@ -177,11 +186,12 @@ Menu.prototype.refresh = function( scrollBox ) {
 				function() {
 					leaveGame();
 				});
-			this.addListElement( 'textbox', 'status', '',
+			textbox = this.addListElement( 'textbox', 'status', '',
 				{ },
 				function() {
 					this.displayName = getGameStatusString();
 				});
+			textbox.style.fill = 'black';
 			break;
 	}
 	

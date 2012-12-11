@@ -117,7 +117,7 @@ MenuElement.prototype.draw = function(context) {
 			break;
 		case 'textbox':
 			context.textAlign = 'center';
-			context.fillStyle = color2;
+			context.fillStyle = this.style.fill;
 
 			context.fillText(this.displayName, this.realPos.x + this.style.width / 2, this.realPos.y + this.style.height - this.style.cornerRadius, this.style.width);
 			break;

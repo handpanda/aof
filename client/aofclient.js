@@ -56,7 +56,7 @@ var inDebugMode = false;
 $(document).ready(function() {
 	scrollBox = new AOFScrollBox();
 
-	socket = new io.connect("http://134.84.147.167:4000");
+	socket = new io.connect("http://localhost:4000");
 	var entry_el = $('#entry');
 
 	socket.on('message', function(data) {
@@ -328,62 +328,33 @@ function updateKeys() {
 	keys.c = keyboardState[KEY.C];
 }
 
-function drawField(context) {
-	// If room is smaller than screen area, center the view on the room
-	// Otherwise, center the view on the player, unless the edge of the room has been reached
-
-	if ( scrollBox == null ) return;
-
-	var offset = new Vec2(0, 0);
-
-	var target;
-	var border = 20;
-	var staminaBarWidth = 20;
-
-	if (clientPlayer != null) target = clientPlayer.pos;
-	else if ( ball != null) target = ball.pos;
-	else target = new Vec2(0, 0);
-
-	scrollBox.centerOn( target.x, target.y );
-
-	context.save();
-		context.translate( -scrollBox.hScroll, -scrollBox.vScroll );
-
-		for (z in zones) {
-			zones[z].draw(context);
-		}
+function drawField( context ) {
+	for (z in zones) {
+		zones[z].draw(context);
+	}
 /*
 			imgTopLeft.draw(context, 0, dims.fieldWidth / 2 - dims.goalWidth / 2 - imgTopLeft.image.height * dims.backlineWidth / imgTopLeft.image.width, dims.backlineWidth);
 			imgBottomLeft.draw(context, 0, dims.fieldWidth / 2 + dims.goalWidth / 2, dims.backlineWidth);
 			imgTopRight.draw(context, dims.fieldLength - dims.backlineWidth, dims.fieldWidth / 2 - dims.goalWidth / 2 - imgTopRight.image.height * dims.backlineWidth / imgTopRight.image.width, dims.backlineWidth);
 			imgBottomRight.draw(context, dims.fieldLength - dims.backlineWidth, dims.fieldWidth / 2 + dims.goalWidth / 2, dims.backlineWidth);
 */
-		for (p in players) {
-			players[p].draw(context);
-		}
-		if (ball != null) ball.draw(context);
-		
-		for (z in zones) {
-			zones[z].drawOverlay(context);
-		}
-		
-		if ( clientPlayer != null ) {
-			context.globalAlpha = 0.5;
-			context.strokeStyle = 'orange';
-			context.lineWidth = 20;
-			context.beginPath();
-			context.arc(clientPlayer.pos.x, clientPlayer.pos.y, 50, 0, Math.PI * 2, false);
-			context.stroke();
-			context.globalAlpha = 1.0;
-		}
-	context.restore();
+	for (p in players) {
+		players[p].draw(context);
+	}
+	if (ball != null) ball.draw(context);
 	
-	// Stamina bar
+	for (z in zones) {
+		zones[z].drawOverlay(context);
+	}
+	
 	if ( clientPlayer != null ) {
-		context.fillStyle = 'red';
-		context.fillRect( border, scrollBox.viewportH - border - staminaBarWidth, scrollBox.viewportW - border * 2, staminaBarWidth );
-		context.fillStyle = 'blue';
-		context.fillRect( border, scrollBox.viewportH - border - staminaBarWidth, clientPlayer.stamina / 100 * ( scrollBox.viewportW - border * 2 ), staminaBarWidth );
+		context.globalAlpha = 0.5;
+		context.strokeStyle = 'orange';
+		context.lineWidth = 20;
+		context.beginPath();
+		context.arc(clientPlayer.pos.x, clientPlayer.pos.y, 50, 0, Math.PI * 2, false);
+		context.stroke();
+		context.globalAlpha = 1.0;
 	}
 }
 
@@ -449,6 +420,95 @@ function getGameStatusString() {
 			rightTeam.name + ' ' + rightScore;
 }
 
+var kdDraw = function ( context, players ) {
+	var compX = function( playerA, playerB ) {
+		return ( playerA.pos.x - playerB.pos.x );
+	}
+	
+	var compY = function( playerA, playerB ) {
+		return ( playerA.pos.y - playerB.pos.y );
+	}
+	
+	var drawTree = function( tree ) {
+		context.lineWidth = 10;	
+			
+		if ( tree.root != null ) {
+			drawNode( tree.root );
+			context.lineWidth = 20;
+			context.beginPath();
+			context.arc(tree.root.object.pos.x, tree.root.object.pos.y, 50, 0, Math.PI * 2, false);
+			context.stroke();				
+		}
+	}
+	
+	var drawNode = function( node ) {
+		if ( node != null ) {
+			drawLinesToChildren( node );
+			drawNode( node.left );
+			drawNode( node.right );
+		}
+	}
+	
+	var drawLinesToChildren = function( node ) {
+		context.strokeStyle = 'black';
+		if ( node.depth % 2 ) context.strokeStyle = 'yellow';
+		
+		if ( node.object != null ) {
+			if ( node.left != null && node.left.object != null ) {
+				context.beginPath();
+				context.moveTo( node.object.pos.x, node.object.pos.y );
+				context.lineTo( node.left.object.pos.x, node.left.object.pos.y );
+				context.stroke();
+			}
+			
+			if ( node.right != null && node.right.object != null ) {
+				context.beginPath();
+				context.moveTo( node.object.pos.x, node.object.pos.y );
+				context.lineTo( node.right.object.pos.x, node.right.object.pos.y );
+				context.stroke();				
+			} 
+		}
+	}
+	
+	var tree = new kdTree( players, 2, [ compX, compY ] );	
+	
+	drawTree( tree );
+}
+
+var drawKey = function(name, posX, posY, width, height) {
+	var radius = 3;
+	
+	context.fillStyle = 'purple';
+	context.strokeStyle = 'black';
+	context.lineWidth = width / 7;
+	
+	context.beginPath();
+	strokeRectangle( posX, posY, width, height, radius );
+	context.fill();
+	context.stroke();
+	
+	context.textAlign = 'center';
+	context.fillStyle = 'black';
+	context.font = height - radius * 4 + "pt bold";
+	
+	context.fillText( name, posX + width / 2, posY + height - radius * 2, width - radius * 4 );
+}
+
+var strokeRectangle = function( posX, posY, width, height, radius ) {
+	context.save();
+		context.translate( posX, posY );
+		context.moveTo( 0, 0 );
+		context.lineTo( width - radius, 0 );
+		context.arcTo( width, 0, width, radius, radius );
+		context.lineTo( width, height - radius );
+		context.arcTo( width, height, width - radius, height, radius );
+		context.lineTo( radius, height );
+		context.arcTo( 0, height, 0, height - radius, radius );
+		context.lineTo( 0, radius );
+		context.arcTo( 0, 0, radius, 0, radius );
+	context.restore();
+}
+
 function render() {
 	scrollBox.clearCanvas();
 
@@ -492,8 +552,92 @@ function render() {
 
 		scrollBox.calcValues();
 
-		drawField(context);
+		var target;
+	
+		if (clientPlayer != null) target = clientPlayer.pos;
+		else if ( ball != null) target = ball.pos;
+		else target = new Vec2(0, 0);
+	
+		scrollBox.centerOn( target.x, target.y );
 
+		context.save();
+			context.translate( -scrollBox.hScroll, -scrollBox.vScroll );
+		
+			drawField(context);
+		context.restore();
+
+		// HUD
+
+		var border = 20;
+		var staminaBarThickness = 20;
+		var cornerRadius = 4;
+		var staminaBarLength = scrollBox.viewportW - border * 2;
+		var currentStamina = clientPlayer.stamina / 100 * staminaBarLength;
+
+		// Stamina bar
+		if ( clientPlayer != null ) {
+			context.save();
+				context.translate( border, scrollBox.viewportH - border * 4 - staminaBarThickness );
+				
+				// Stamina bar outline, with rounded corners (this is what changes shape with the player's stamina)
+				context.beginPath();
+					strokeRectangle( 0, 0, currentStamina, staminaBarThickness, cornerRadius );
+				context.clip();
+				
+				// Stamina bar
+				context.fillStyle = 'purple';
+				context.fillRect( 0, 0, staminaBarLength, staminaBarThickness );
+				
+				// Stamina bar text
+				context.textAlign = 'center';
+				context.fillStyle = 'black';
+				context.font = 'italic ' + staminaBarThickness + 'pt bold';
+				context.fillText( "T        U        R        B        O", staminaBarLength / 2, border);
+			context.restore();			
+		}
+
+		// Instructions
+		// Arrows - move Z - kick X - punt C - run V - call for pass
+		
+		context.save();
+			context.translate( border, scrollBox.viewportH - border );
+				
+			var smallKeySize = 20;
+			var largeKeySize = 40;	
+			var font = '50pt bold';
+			var interval = scrollBox.viewportW / 5;
+			
+			var illustrateKey = function( name, text, posX, posY ) {
+				context.save();
+					context.translate( posX, 0 );	
+					drawKey( name, 0, -largeKeySize, largeKeySize, largeKeySize );
+					
+					context.textAlign = 'left';
+					context.fillStyle = 'black';
+					context.font = font;
+					context.fillText( text, largeKeySize, 0, interval / 2);
+				context.restore();
+			}
+			
+			context.translate( 0, 0 );	
+			drawKey( "", 0, -smallKeySize, smallKeySize, smallKeySize );
+			drawKey( "", smallKeySize, -smallKeySize * 2, smallKeySize, smallKeySize );
+			drawKey( "", smallKeySize, -smallKeySize, smallKeySize, smallKeySize );
+			drawKey( "", smallKeySize * 2, -smallKeySize, smallKeySize, smallKeySize );
+			
+			context.textAlign = 'left';
+			context.fillStyle = 'black';
+			context.font = font;
+			context.fillText(" Move", smallKeySize * 3, 0, interval / 2);			
+			
+			illustrateKey( "Z", " Kick", interval, 0 );
+			illustrateKey( "X", " Punt", interval * 2, 0 );
+			illustrateKey( "C", " Run", interval * 3, 0 );
+			illustrateKey( "V", " Call", interval * 4, 0 );
+			
+			
+		context.restore();
+			
 		menu.draw( context );
 		break;
 	case screen.RESULT:
