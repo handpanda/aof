@@ -93,37 +93,23 @@ Field.prototype.interact = function(ball) {
 	}
 
 	if (ball.overlaps(this.leftBackline)) {
-		if (ball.center.y < this.grass.height / 2) {
-			//ball.vel.zero();
-			ball.inboundPos.set(this.leftGoalieBox.pos.plus(new Vec2(this.leftGoalieBox.width - ball.width / 2, - ball.height / 2)));			
-		} else {
-			//ball.vel.zero();
-			ball.inboundPos.set(this.leftGoalieBox.pos.plus(new Vec2(this.leftGoalieBox.width - ball.width / 2, this.leftGoalieBox.height - ball.height / 2)));			
-		}
-		return new Event('left', Event.prototype.TYPE.GOALKICK);
+		ball.inboundPos.set( new Vec2 (this.leftBackline.pos.x + this.leftBackline.width, ball.pos.y ) );
+		return new Event('', Event.prototype.TYPE.THROWIN);
 	}
 
 	if (ball.overlaps(this.topSideline)) {
-		//ball.vel.zero();
 		ball.inboundPos.set(new Vec2(ball.pos.x, this.topSideline.pos.y + this.topSideline.height));
 		return new Event('', Event.prototype.TYPE.THROWIN);
 	}
 
 	if (ball.overlaps(this.bottomSideline)) {
-		//ball.vel.zero();
 		ball.inboundPos.set(new Vec2(ball.pos.x, this.bottomSideline.pos.y - ball.height));
 		return new Event('', Event.prototype.TYPE.THROWIN);
 	}
 
 	if (ball.overlaps(this.rightBackline)) {
-		if (ball.center.y < this.grass.height / 2) {
-			//ball.vel.zero();
-			ball.inboundPos.set(this.rightGoalieBox.pos.plus(new Vec2(-ball.width / 2, -ball.height / 2)));			
-		} else {
-			//ball.vel.zero();
-			ball.inboundPos.set(this.rightGoalieBox.pos.plus(new Vec2(-ball.width / 2, this.rightGoalieBox.height - ball.height / 2)));			
-		}
-		return new Event('right', Event.prototype.TYPE.GOALKICK);
+		ball.inboundPos.set( new Vec2( this.rightBackline.pos.x, ball.pos.y ) );
+		return new Event('', Event.prototype.TYPE.THROWIN);
 	}
 }
 
