@@ -103,9 +103,6 @@ Menu.prototype.refresh = function( scrollBox ) {
 			
 			this.addListElement( 'spacer', '', '', { }, null );
 			
-			this.addListElement( 'button', 'howto', 'How to Play', { }, function() {
-				
-				
 			});
 			
 			// Button to make a new game
