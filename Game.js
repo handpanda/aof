@@ -200,9 +200,11 @@ Game.prototype.update = function() {
 
 	if ( this.state == Game.prototype.STATE.INPROGRESS && this.data.time > GAME_LENGTH_SECS ) this.react( new Event( '', Event.prototype.TYPE.ENDOFGAME ) );
 
+	this.gamefield.interact( this.ball );
+
 	// See if the ball has caused any events on the field		
 	if ( !this.data.stopped ) {
-		if ( e = this.gamefield.interact( this.ball ) ) this.react( e );
+		if ( e = this.gamefield.testZones( this.ball ) ) this.react( e );
 	}
 	
 	if ( !this.data.stopped ) this.updatePlayers();

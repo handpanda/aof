@@ -71,7 +71,9 @@ Field.prototype.interact = function(ball) {
 	for (b in this.barriers) {
 		ball.bounce(this.barriers[b]);
 	}
+}
 
+Field.prototype.testZones = function( ball ) {
 	if (ball.overlaps(this.leftGoal)) {
 		if (ball.z == 0) {
 			//ball.vel.zero();
