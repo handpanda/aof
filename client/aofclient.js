@@ -8,23 +8,6 @@ var keys = {
 	c     : false,
 }
 
-/*
-var imgRoman1 = new regularImage("./roman1.png");
-var imgRoman2 = new regularImage("./roman2.png");
-var imgMongol1 = new regularImage("./mongol1.png");
-var imgCossack1 = new regularImage("./cossack1.png");
-var imgAztec1 = new regularImage("./aztec1.png");
-var imgAztec2 = new regularImage("./aztec2.png");
-var imgViking1 = new regularImage("./viking1.png");
-var imgViking2 = new regularImage("./viking2.png");
-var imgChinese1 = new regularImage("./chinese1.png");
-var imgChinese2 = new regularImage("./chinese2.png");
-
-var imgTopRight = new regularImage("./mongol1.png");
-var imgTopLeft = new regularImage("./mongol1.png");
-var imgBottomRight = new regularImage("./mongol1.png");
-var imgBottomLeft = new regularImage("./mongol1.png");
-*/
 var socket;
 
 var ball = null;
@@ -137,64 +120,10 @@ $(document).ready(function() {
 		switch (data.side) {
 			case 'left':
 				leftTeam = new Team(data.name, data.side);
-
-/*				switch (leftTeam.name) {
-					case "Mongols":
-						imgTopLeft = imgMongol1;
-						imgBottomLeft = imgMongol1;
-						break;
-					case "Zulu":
-						imgTopLeft = imgCossack1;
-						imgBottomLeft = imgCossack1;
-						break;
-					case "Chinese":
-						imgTopLeft = imgChinese1;
-						imgBottomLeft = imgChinese2;
-						break;
-					case "Vikings":
-						imgTopLeft = imgViking1;
-						imgBottomLeft = imgViking2;
-						break;
-					case "Romans":
-						imgTopLeft = imgRoman1;
-						imgBottomLeft = imgRoman2;
-						break;
-					case "Aztecs":
-						imgTopLeft = imgAztec1;
-						imgBottomLeft = imgAztec2;
-						break;
-				}
-*/	
 				break;
+				
 			case 'right':
 				rightTeam = new Team(data.name, data.side);
-/*
-				switch (rightTeam.name) {
-					case "Mongols":
-						imgTopRight = imgMongol1;
-						imgBottomRight = imgMongol1;
-						break;
-					case "Zulu":
-						imgTopRight = imgCossack1;
-						imgBottomRight = imgCossack1;
-						break;
-					case "Chinese":
-						imgTopRight = imgChinese1;
-						imgBottomRight = imgChinese2;
-						break;
-					case "Vikings":
-						imgTopRight = imgViking1;
-						imgBottomRight = imgViking2;
-						break;
-					case "Romans":
-						imgTopRight = imgRoman1;
-						imgBottomRight = imgRoman2;
-						break;
-					case "Aztecs":
-						imgTopRight = imgAztec1;
-						imgBottomRight = imgAztec2;
-						break;
-				}*/
 				break;
 		}	
 	});
@@ -332,12 +261,7 @@ function drawField( context ) {
 	for (z in zones) {
 		zones[z].draw(context);
 	}
-/*
-			imgTopLeft.draw(context, 0, dims.fieldWidth / 2 - dims.goalWidth / 2 - imgTopLeft.image.height * dims.backlineWidth / imgTopLeft.image.width, dims.backlineWidth);
-			imgBottomLeft.draw(context, 0, dims.fieldWidth / 2 + dims.goalWidth / 2, dims.backlineWidth);
-			imgTopRight.draw(context, dims.fieldLength - dims.backlineWidth, dims.fieldWidth / 2 - dims.goalWidth / 2 - imgTopRight.image.height * dims.backlineWidth / imgTopRight.image.width, dims.backlineWidth);
-			imgBottomRight.draw(context, dims.fieldLength - dims.backlineWidth, dims.fieldWidth / 2 + dims.goalWidth / 2, dims.backlineWidth);
-*/
+
 	for (p in players) {
 		players[p].draw(context);
 	}
@@ -634,7 +558,6 @@ function render() {
 			illustrateKey( "X", " Punt", interval * 2, 0 );
 			illustrateKey( "C", " Run", interval * 3, 0 );
 			illustrateKey( "V", " Call", interval * 4, 0 );
-			
 			
 		context.restore();
 			

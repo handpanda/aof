@@ -50,7 +50,11 @@ var Man = function(pos, side) {
 	this.staminaUse = 2;
 	this.staminaRecovery = 1; 
 	
+	this.destPos = new Vec2( 0, 0 );
+	
 	this.behaviors = [];
+	
+	this.path = []; // List of vectors to travel to
 	
 	this.envInfo = new EnvInfo();
 }
@@ -130,27 +134,30 @@ Man.prototype.generateBehaviors = function() {
 	var distToTarget = this.pos.distanceTo( targetPos );
 	var shouldAttack = !(!this.envInfo.isBallFree && this.envInfo.ballSide == this.side);
 	
+	this.path = [];
+	
 	// Movement
 	if (this.hasBall) {
 		if ( distBallToAnchor < this.radius) {
 			// If the player has the ball but is out of range, move toward the goal
-			//player.lookAt(goalPos);
-			this.goToward(targetPos);
+			this.destPos = targetPos;
 		} else {
 			// If the player has the ball and is in range, aim at the goal
 			this.lookAt(targetPos);  
+			this.destPos = this.pos;
 		}	
 	} else {
 		if ( shouldAttack && distBallToAnchor < this.radius) {
 			// If the player does not have the ball and none of his teammates do either and the ball is in range, move toward it
-			//player.lookAt(this.ball.pos);
-			this.goToward(this.envInfo.ballPos);
+			this.destPos = this.envInfo.ballPos;
 		} else {
 			// Otherwise, return to position
-			//player.lookAt(anchorPos);
-			this.goToward(this.envInfo.anchorPos);
+			this.destPos = this.envInfo.anchorPos;
 		}					
 	}
+	
+	if ( this.path.length > 0 ) this.goToward( this.path[0] );
+	else this.goToward( this.destPos );
 	
 // Actions
 	if (this.hasBall) {
@@ -312,8 +319,6 @@ Man.prototype.lookAt = function(pos) {
 Man.prototype.goToward = function(pos) {
 	if (ACT.canAccelerate(this.action)) {
 		if ( this.pos.distanceTo( pos ) < this.runSpeed ) {
-			this.lookAt( pos );
-			
 			this.pos.set( pos );
 		} else {
 			this.lookAt( pos );
@@ -349,4 +354,29 @@ Man.prototype.applyPhysics = function() {
 	this.updateCenter();	
 }
 
-module.exports = Man;[]
+// Prepare data to send to a client
+Man.prototype.makePacket = function() {
+	this.packet = {
+		id : 	this.id,
+		clientid : this.clientid,
+		type : 	this.type,
+		pos : 	 	this.pos.clip(),
+		vel :  		this.vel,
+		z : 	 	this.z,
+		velZ :	 	this.velZ,
+		width : 	this.width,
+		height : 	this.height,	
+		angle : 	this.angle,
+		side : 	this.side,
+		action : 	this.action,
+		latency : 	this.latency,
+		stamina :	this.stamina,
+		msecsSinceLastPing : this.msecsSinceLastPing,
+	}	
+}
+
+Man.prototype.getPacket = function() {
+	return this.packet;
+}
+
+module.exports = Man;

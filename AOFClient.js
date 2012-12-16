@@ -59,8 +59,6 @@ var AOFClient = function( ioClient ) {
 
 		var player = new Man(new Vec2(0, 0), clientnum % 2 ? 'left' : 'right');
 
-		//player.id = clientnum;
-
 		client.player = player;
 		client.playerid = player.id;
 		client.player.clientid = client.ident;

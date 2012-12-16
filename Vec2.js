@@ -99,4 +99,8 @@ Vec2.prototype.rotate = function(a) {
 	return this;
 }
 
+Vec2.prototype.clip = function() {
+	return new Vec2( Math.floor( this.x ), Math.floor( this.y ) );
+}
+
 module.exports = Vec2;
