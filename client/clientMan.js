@@ -4,6 +4,8 @@ var clientMan = function(pos, side) {
 	this.hasBall = 	false;
 	
 	this.pastPositions = [];
+	
+	this.stamina = 0;
 }
 
 clientMan.prototype = new clientEntity();

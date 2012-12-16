@@ -108,14 +108,14 @@ $(document).ready(function() {
 		for (p in players) {
 			if (players[p].id == data.id) {
 				found = true;
-				players[p].grab(data);
+				players[p].setValues(data);
 			}
 		}
 		if (!found) {
-			players.push(new clientMan(new Vec2(0, 0)));
+			players.push( new clientMan( new Vec2(0, 0), data.side) );
 			players[players.length - 1].clientid = data.clientid;
 			players[players.length - 1].id = data.id;
-			players[players.length - 1].grab(data);
+			players[players.length - 1].setValues(data);
 		}
 		
 		//console.log(data);

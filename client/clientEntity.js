@@ -33,10 +33,7 @@ var clientEntity = function(pos, objtype, side) {
 	this.msecsSinceLastPing = 0;
 	this.angle = 	0.0;
 	this.center =   new Vec2(this.pos.x + this.width / 2, this.pos.y + this.width / 2);
-	this.faceDir = 	new Vec2(Math.cos(this.angle), Math.sin(this.angle));
 	this.action  = 	ACT.STAND;
-	this.vel = 	new Vec2(0, 0);
-	this.class = 	0;
 	this.side = 	side;
 	this.z = 0;
 	this.velZ = 0;
@@ -48,7 +45,7 @@ clientEntity.prototype.draw = function(context) {
 		context.translate(this.pos.x, this.pos.y);
 		context.save();
 			context.fillStyle = this.type.color;
-			if (this.side == 'left') context.fillStyle = 'blue';
+			if (this.side == 'left') context.fillStyle = 'blue';l
 			if (this.side == 'right') context.fillStyle = 'red';				
 
 			context.fillRect( this.pos.x, this.pos.y, this.width, this.height );
@@ -59,20 +56,35 @@ clientEntity.prototype.draw = function(context) {
 // Get updated values from the server
 clientEntity.prototype.grab = function(data) {
 	this.type = 	data.type;
-	this.pos = 	 	data.pos;	
-	this.vel = 	 	data.vel;
+	this.pos = 	 	data.pos;
 	this.z = 	 	data.z;
 	this.velZ =	 	data.velZ;
 	this.width = 	data.width;
 	this.height = 	data.height;	
 	this.angle = 	data.angle;
-	this.center =	data.center;
-	this.faceDir =	data.faceDir;
-	this.kick = 	data.kick;
 	this.side = 	data.side;
 	this.action = 	data.action;
-	this.class = 	data.class;
 	this.latency = 	data.latency;
 	this.stamina =	data.stamina;
 	this.msecsSinceLastPing = data.msecsSinceLastPing;
+}
+
+clientEntity.prototype.setValues = function( values ) {
+	if ( values === undefined ) return;
+	
+	for ( key in values ) {
+		if ( this[key] === undefined ) {
+			console.warn("/EnvInfo/: undefined parameter " + key);
+			continue;
+		}
+		
+		var currentValue = this[key];
+		var newValue = values[key];
+		
+		if ( currentValue instanceof Vec2 ) {
+			this[key].set( newValue );
+		} else {
+			this[key] = newValue;
+		}
+	}
 }

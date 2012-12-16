@@ -20,7 +20,7 @@ var Menu = function() {
 	this.buttonStyle.height = this.buttonStyle.fontSize + this.buttonStyle.cornerRadius * 2;
 	
 	this.y = 0;
-}
+}	
 
 Menu.prototype.clearChosenEntries = function(name) {
 	for (l in this.elementList) {
@@ -102,8 +102,6 @@ Menu.prototype.refresh = function( scrollBox ) {
 			this.addListElement( 'title', 'title', 'AGE OF FOOTBALL', { }, null );
 			
 			this.addListElement( 'spacer', '', '', { }, null );
-			
-			});
 			
 			// Button to make a new game
 			this.addListElement( 'button', 'new game', 'New Game', { },
