@@ -19,6 +19,8 @@ var gameid = -1;
 var players = [];
 var zones = [];
 
+var playerTree = null;
+
 var leftTeam = null;
 var rightTeam = null;
 
@@ -220,7 +222,7 @@ $(document).ready(function() {
 mousePos = new Vec2(0, 0);
 mousedown = false;
 
-function mouseMoveHandler(event) {
+var mouseMoveHandler = function(event) {
 	if (event.pageX || event.pageY) { 
 		mousePos.x = event.pageX;
 		mousePos.y = event.pageY;
@@ -233,21 +235,22 @@ function mouseMoveHandler(event) {
 	mousePos.y -= scrollBox.canvas.offsetTop;
 }
 
-function mouseDownHandler(event) {
+var mouseDownHandler = function(event) {
 	mousedown = true;
 	
 	menu.onMouseHit();
 }
 
-function mouseUpdater() {
+var mouseUpdater = function() {
 	mousedown = false;
 }
 
-function mouseUpHandler(event) {
+var mouseUpHandler = function(event) {
 	mousedown = false;
 }
 
-function updateKeys() {
+// Update the packet containing the player's keystroke information
+var prepareKeyPacket = function() {
 	keys.left = keyboardState[KEY.LEFT];
 	keys.right = keyboardState[KEY.RIGHT];
 	keys.up = keyboardState[KEY.UP];
@@ -257,28 +260,82 @@ function updateKeys() {
 	keys.c = keyboardState[KEY.C];
 }
 
-function drawField( context ) {
-	for (z in zones) {
-		zones[z].draw(context);
-	}
+/* 
+ * routeAround
+ * 
+ * find a path around some obstacle
+ * the 'path' consists of the midpoints of the open areas left and right of the obstacle
+ * 
+ */
+var routeAround = function( point, approach ) {
+	if (clientPlayer == null) return;
+	
+	var box = clientPlayer.sightLine;
 
+	context.fillStyle = 'orange';
+	
+	if ( playerTree.overlaps( box ) ) {
+		context.fillStyle = 'red';
+	}
+	
+	if ( box.containsPoint( clientPlayer.pos ) ) {
+		context.fillStyle = 'purple';
+	}	
+
+	context.lineWidth = 1;
+	context.strokeStyle = 'blue';
+	
+	var convert = function( point ) {
+		var p = point.minus( box.pos );
+		p.rotate( box.angle );
+		p.add( box.pos );
+		
+		return p;		
+	}
+	
+	context.save();
+		context.beginPath();
+		
+		context.moveTo( box.left, box.top );
+		context.lineTo( box.right, box.top );
+		context.lineTo( box.right, box.bottom );
+		context.lineTo( box.left, box.bottom );
+		context.closePath();
+		
+		for ( p in players ) {
+			var loc = convert( players[p].center );
+			
+			context.stroke();
+			context.fillStyle = 'blue';
+			context.fillRect( loc.x - 5, loc.y - 5, 10, 10 );
+		}
+	context.restore();
+
+	context.fillStyle = 'orange';
+	context.fillRect( clientPlayer.pos.x, clientPlayer.pos.y, 20, 20 );
+}
+	
+var findRoute = function( context ) {
+	
+}
+
+var debugDraw = function( context ) {
 	for (p in players) {
 		players[p].draw(context);
-	}
-	if (ball != null) ball.draw(context);
-	
-	for (z in zones) {
-		zones[z].drawOverlay(context);
-	}
-	
-	if ( clientPlayer != null ) {
-		context.globalAlpha = 0.5;
-		context.strokeStyle = 'orange';
-		context.lineWidth = 20;
-		context.beginPath();
-		context.arc(clientPlayer.pos.x, clientPlayer.pos.y, 50, 0, Math.PI * 2, false);
-		context.stroke();
+		
+		if ( players[p].obstructed ) context.fillStyle = 'black';
+		else context.fillStyle = 'white';
+		
+		context.globalAlpha = 0.6;
+		players[p].sightLine.drawRect( context );
 		context.globalAlpha = 1.0;
+	}
+	
+	if ( playerTree != null ) playerTree.draw( context );
+	
+	if ( clientPlayer != null && clientPlayer.obstructed && clientPlayer.occluder != null ) {
+		context.fillStyle = 'purple';
+		context.fillRect( clientPlayer.occluder.center.x, clientPlayer.occluder.center.y, 20, 20 );
 	}
 }
 
@@ -328,23 +385,43 @@ var leaveGame = function() {
 
 var updateInterval;
 
-function update() {
+var update = function() {
 	if ( overlay != null ) socket.emit( 'waiting', null );
 
 	menu.update( scrollBox );
+
+	updateBall();
+
+	if( clientPlayer != null ) clientPlayer.destPos = mousePos.plus( new Vec2( scrollBox.hScroll, scrollBox.vScroll ) );
+	updatePlayers();
+	updatePlayerTree( players );
+	testPlayersAgainstTree( players, playerTree );
 
 	render();
 	
 	mouseUpdater();
 }
 
-function getGameStatusString() {
+var getGameStatusString = function() {
 	return leftTeam.name + ' ' + leftScore + ' ' +
 			text.pad0(Math.floor(time / 60).toString(), 2) + ":" + text.pad0((time % 60).toString(), 2) + ' ' + 
 			rightTeam.name + ' ' + rightScore;
 }
 
-var kdDraw = function ( context, players ) {
+var updateBall = function() {
+	if ( ball != null ) ball.updateSides();	
+}
+
+var updatePlayers = function() {
+	for ( p in players ) {
+		var player = players[p];
+		
+		player.updateSides();
+		player.updateSightLine();
+	}
+}
+
+var updatePlayerTree = function ( players ) {
 	var compX = function( playerA, playerB ) {
 		return ( playerA.pos.x - playerB.pos.x );
 	}
@@ -353,51 +430,17 @@ var kdDraw = function ( context, players ) {
 		return ( playerA.pos.y - playerB.pos.y );
 	}
 	
-	var drawTree = function( tree ) {
-		context.lineWidth = 10;	
-			
-		if ( tree.root != null ) {
-			drawNode( tree.root );
-			context.lineWidth = 20;
-			context.beginPath();
-			context.arc(tree.root.object.pos.x, tree.root.object.pos.y, 50, 0, Math.PI * 2, false);
-			context.stroke();				
-		}
-	}
-	
-	var drawNode = function( node ) {
-		if ( node != null ) {
-			drawLinesToChildren( node );
-			drawNode( node.left );
-			drawNode( node.right );
-		}
-	}
-	
-	var drawLinesToChildren = function( node ) {
-		context.strokeStyle = 'black';
-		if ( node.depth % 2 ) context.strokeStyle = 'yellow';
-		
-		if ( node.object != null ) {
-			if ( node.left != null && node.left.object != null ) {
-				context.beginPath();
-				context.moveTo( node.object.pos.x, node.object.pos.y );
-				context.lineTo( node.left.object.pos.x, node.left.object.pos.y );
-				context.stroke();
-			}
-			
-			if ( node.right != null && node.right.object != null ) {
-				context.beginPath();
-				context.moveTo( node.object.pos.x, node.object.pos.y );
-				context.lineTo( node.right.object.pos.x, node.right.object.pos.y );
-				context.stroke();				
-			} 
-		}
-	}
-	
-	var tree = new kdTree( players, 2, [ compX, compY ] );	
-	
-	drawTree( tree );
+	playerTree = new KDTree( players, 2, [ compX, compY ] );	
 }
+
+var testPlayersAgainstTree = function( players, tree ) {
+	for ( p in players ) {
+		var player = players[p];		
+		
+		if ( tree != null ) player.testAgainstTree( tree, player == clientPlayer, player );
+	}
+}
+
 
 var drawKey = function(name, posX, posY, width, height) {
 	var radius = 3;
@@ -433,7 +476,7 @@ var strokeRectangle = function( posX, posY, width, height, radius ) {
 	context.restore();
 }
 
-function render() {
+var render = function() {
 	scrollBox.clearCanvas();
 
 	context = scrollBox.getContext();
@@ -467,7 +510,7 @@ function render() {
 	case screen.GAME:
 		if ( inDebugMode ) socket.emit('debuginput', keyboardState);
 		else socket.emit('input', keys);
-		updateKeys();
+		prepareKeyPacket();
 		keyboardStateUpdater();
 
 		for (p in players) {
@@ -488,6 +531,10 @@ function render() {
 			context.translate( -scrollBox.hScroll, -scrollBox.vScroll );
 		
 			drawField(context);
+			
+			//routeAround();
+			
+			if ( keyHeld(KEY.D) ) debugDraw( context );
 		context.restore();
 
 		// HUD
@@ -573,6 +620,32 @@ function render() {
 		if ( overlay.removeThis ) overlay = null;
 	}
 }
+
+var drawField = function( context ) {
+	for (z in zones) {
+		zones[z].draw(context);
+	}
+
+	for (p in players) {
+		players[p].draw(context);
+	}
+	if (ball != null) ball.draw(context);
+	
+	for (z in zones) {
+		zones[z].drawOverlay(context);
+	}
+	
+	if ( clientPlayer != null ) {
+		context.globalAlpha = 0.5;
+		context.strokeStyle = 'orange';
+		context.lineWidth = 20;
+		context.beginPath();
+		context.arc(clientPlayer.center.x, clientPlayer.center.y, 50, 0, Math.PI * 2, false);
+		context.stroke();
+		context.globalAlpha = 1.0;
+	}
+}
+
 
 document.onkeydown = keyDownHandler;
 document.onkeyup = keyUpHandler;

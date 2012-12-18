@@ -6,8 +6,11 @@ clientBall.prototype = new clientEntity();
 clientBall.prototype.constructor = clientBall;
 
 clientBall.prototype.draw = function( context ) {
+	//context.fillStyle = 'orange';
+	//context.fillRect( this.pos.x, this.pos.y, this.width, this.height );	
+	
 	context.save();
-		context.translate(this.pos.x, this.pos.y);
+		context.translate(this.center.x, this.center.y);
 		context.save();
 			context.beginPath();
 			if (this.side == 'left') context.strokeStyle = 'blue';

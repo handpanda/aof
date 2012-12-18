@@ -8,7 +8,7 @@
  *  color - the primary color to use
  * 
  */
-function anim1( string, color, scrollBox ) {
+var anim1 = function( string, color, scrollBox ) {
 	this.string = string; // The string to display
 	
 	this.width = 72 * 4; // Width of the text
@@ -135,7 +135,7 @@ anim1.prototype.loop = function() {
 	this.render( context );
 }
 
-function anim2( string, color, scrollBox ) {
+var anim2 = function( string, color, scrollBox ) {
 	this.color = color;
 	this.string = string;
 	

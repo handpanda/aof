@@ -16,7 +16,7 @@ AOFScrollBox.prototype.clearCanvas = function() {
 	this.context.beginPath();
 }
 
-AOFScrollBox.prototype.centerOn= function( x, y ) {
+AOFScrollBox.prototype.centerOn = function( x, y ) {
 	this.setScroll( x - this.viewportW / 2, y - this.viewportH / 2 );
 }
 

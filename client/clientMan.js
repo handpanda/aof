@@ -6,17 +6,65 @@ var clientMan = function(pos, side) {
 	this.pastPositions = [];
 	
 	this.stamina = 0;
+	
+	this.destPos = new Vec2( 0, 0 );
+	
+	this.sightLine = new clientEntity( new Vec2( 0, 0 ), type.none, '' );
+	this.obstructed = false;
+	
+	this.occluder = null;
 }
 
 clientMan.prototype = new clientEntity();
 clientMan.prototype.constructor = clientMan;
 
+clientMan.prototype.updateSightLine = function() {
+	this.sightLine.angle = Math.atan2( this.destPos.y - this.pos.y, this.destPos.x - this.pos.x );	
+	this.sightLine.width = this.destPos.distanceTo( this.pos );
+	this.sightLine.height = 20;
+	
+	this.sightLine.pos = this.center.plus( new Vec2( 20, -this.sightLine.height / 2 ).rotate( -this.sightLine.angle ) );
+	this.sightLine.updateSides();
+
+	var topLeft = new Vec2( 20, -this.sightLine.height / 2 );
+	var topRight = new Vec2( 20 + this.sightLine.width, -this.sightLine.height / 2);
+	var bottomRight = new Vec2( 20 + this.sightLine.width, this.sightLine.height / 2);
+	var bottomLeft = new Vec2( 20, this.sightLine.height / 2 );
+	
+	topLeft.rotate( -this.sightLine.angle ).add( this.center );
+	topRight.rotate( -this.sightLine.angle ).add( this.center );
+	bottomRight.rotate( -this.sightLine.angle ).add( this.center );
+	bottomLeft.rotate( -this.sightLine.angle ).add( this.center );
+	
+	this.sightLine.maxLeft = Math.min( topLeft.x, topRight.x, bottomRight.x, bottomLeft.x );
+	this.sightLine.maxRight = Math.max( topLeft.x, topRight.x, bottomRight.x, bottomLeft.x );
+	this.sightLine.maxTop = Math.min( topLeft.y, topRight.y, bottomRight.y, bottomLeft.y );
+	this.sightLine.maxBottom = Math.max( topLeft.y, topRight.y, bottomRight.y, bottomLeft.y );
+	
+	this.obstructed = false;
+}
+
+clientMan.prototype.testAgainstTree = function( playerTree, mark ) {
+	this.occluder = null;
+	
+	this.obstructed = playerTree.isContainedBy( this.sightLine, mark, this );
+	
+	if ( playerTree.occluder != null ) this.occluder = playerTree.occluder;
+}
+
+clientMan.prototype.testAgainstMan = function( man ) {
+	this.obstructed = this.sightLine.containsPoint( man.center );
+}
+
 clientMan.prototype.draw = function( context ) {
 	this.pastPositions.push( this.pos );
 	if ( this.pastPositions.length > 10 ) this.pastPositions.pop();
 	
+	//context.fillStyle = 'orange';
+	//context.fillRect( this.pos.x, this.pos.y, this.width, this.height );
+	
 	context.save();
-		context.translate(this.pos.x, this.pos.y);
+		context.translate(this.center.x, this.center.y);
 		context.save();
 			context.fillStyle = this.type.color;
 			if (this.side == 'left') context.fillStyle = 'blue';
