@@ -13,43 +13,51 @@ var clientMan = function(pos, side) {
 	this.obstructed = false;
 	
 	this.occluder = null;
+	this.leftOption = null;
+	this.rightOption = null;
+	this.leftOccluder = null;
+	this.rightOccluder = null;
+	this.interDestPos = null;
 }
 
 clientMan.prototype = new clientEntity();
 clientMan.prototype.constructor = clientMan;
 
 clientMan.prototype.updateSightLine = function() {
-	this.sightLine.angle = Math.atan2( this.destPos.y - this.pos.y, this.destPos.x - this.pos.x );	
-	this.sightLine.width = this.destPos.distanceTo( this.pos );
-	this.sightLine.height = 20;
-	
-	this.sightLine.pos = this.center.plus( new Vec2( 20, -this.sightLine.height / 2 ).rotate( -this.sightLine.angle ) );
-	this.sightLine.updateSides();
-
-	var topLeft = new Vec2( 20, -this.sightLine.height / 2 );
-	var topRight = new Vec2( 20 + this.sightLine.width, -this.sightLine.height / 2);
-	var bottomRight = new Vec2( 20 + this.sightLine.width, this.sightLine.height / 2);
-	var bottomLeft = new Vec2( 20, this.sightLine.height / 2 );
-	
-	topLeft.rotate( -this.sightLine.angle ).add( this.center );
-	topRight.rotate( -this.sightLine.angle ).add( this.center );
-	bottomRight.rotate( -this.sightLine.angle ).add( this.center );
-	bottomLeft.rotate( -this.sightLine.angle ).add( this.center );
-	
-	this.sightLine.maxLeft = Math.min( topLeft.x, topRight.x, bottomRight.x, bottomLeft.x );
-	this.sightLine.maxRight = Math.max( topLeft.x, topRight.x, bottomRight.x, bottomLeft.x );
-	this.sightLine.maxTop = Math.min( topLeft.y, topRight.y, bottomRight.y, bottomLeft.y );
-	this.sightLine.maxBottom = Math.max( topLeft.y, topRight.y, bottomRight.y, bottomLeft.y );
-	
+	this.sightLine = new SightLine( this.center, this.destPos );
 	this.obstructed = false;
 }
 
-clientMan.prototype.testAgainstTree = function( playerTree, mark ) {
+clientMan.prototype.testAgainstTree = function( playerTree, mark, bounds ) {
 	this.occluder = null;
+	this.leftOption = null;
+	this.rightOption = null;
+	this.leftOccluder = null;
+	this.rightOccluder = null;
 	
-	this.obstructed = playerTree.isContainedBy( this.sightLine, mark, this );
+	this.obstructed = playerTree.isContainedBy( this.sightLine, mark );
 	
-	if ( playerTree.occluder != null ) this.occluder = playerTree.occluder;
+	// We are occluded and have to go a different direction
+	if ( this.obstructed && playerTree.occluder != null ) {
+		this.occluder = playerTree.occluder;
+		
+		var v = this.sightLine.toPos.minus( this.sightLine.fromPos ).swap();//.normalize();
+		v.y *= -1;
+		
+		this.leftOption = new SightLine( this.occluder.center, this.occluder.center.plus( v ) );
+		this.rightOption = new SightLine( this.occluder.center, this.occluder.center.plus( v.flip() ) );
+		
+		if ( playerTree.isContainedBy( this.leftOption, false ) && playerTree.occluder != null ) {
+			this.leftOccluder = playerTree.occluder;
+			this.interDestPos = this.occluder.center.plus( this.leftOccluder.center ).scale( 0.5 );
+		}
+		if ( playerTree.isContainedBy( this.rightOption, false ) && playerTree.occluder != null ) {
+			this.rightOccluder = playerTree.occluder;
+			this.interDestPos = this.occluder.center.plus( this.rightOccluder.center ).scale( 0.5 );
+		}
+	} else {
+		this.interDestPos = null;
+	}
 }
 
 clientMan.prototype.testAgainstMan = function( man ) {

@@ -5,6 +5,13 @@ var clientZone = function(pos, objtype, side) {
 clientZone.prototype = new clientEntity();
 clientZone.prototype.constructor = clientZone;
 
+clientZone.prototype.clip = function( vec ) {
+	if ( vec.x < this.left ) vec.x = this.left;
+	if ( vec.x > this.right ) vec.x = this.right;
+	if ( vec.y < this.top ) vec.y = this.top;
+	if ( vec.y > this.bottom ) vec.y = this.bottom;
+}
+
 clientZone.prototype.draw = function( context ) {
 	context.save();
 		context.translate(this.pos.x, this.pos.y);

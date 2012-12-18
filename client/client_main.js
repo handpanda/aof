@@ -320,24 +320,43 @@ var findRoute = function( context ) {
 }
 
 var debugDraw = function( context ) {
-	for (p in players) {
-		players[p].draw(context);
+	if ( keyHeld( KEY.G ) ) { 
+		for (p in players) {
+			var player = players[p];
+			
+			if ( player.obstructed ) context.fillStyle = 'black';
+			else context.fillStyle = 'white';
+			
+			context.globalAlpha = 0.6;
+			player.sightLine.drawRect( context );
+			if ( player.leftOption != null ) {
+				player.leftOption.drawRect( context );
+			}
+			
+			if ( player.rightOption != null ) {
+				player.rightOption.drawRect( context );
+			}
+			
+			context.globalAlpha = 1.0;			
+		}
 		
-		if ( players[p].obstructed ) context.fillStyle = 'black';
-		else context.fillStyle = 'white';
-		
-		context.globalAlpha = 0.6;
-		players[p].sightLine.drawRect( context );
-		context.globalAlpha = 1.0;
+		if ( clientPlayer != null && clientPlayer.obstructed && clientPlayer.occluder != null ) {
+			context.fillStyle = 'purple';
+			context.fillRect( clientPlayer.occluder.center.x, clientPlayer.occluder.center.y, 20, 20 );
+			
+			if ( clientPlayer.leftOccluder != null ) {
+				context.fillRect( clientPlayer.leftOccluder.center.x, clientPlayer.leftOccluder.center.y, 20, 20 );	
+			}
+			if ( clientPlayer.rightOccluder != null ) {
+				context.fillRect( clientPlayer.rightOccluder.center.x, clientPlayer.rightOccluderxz.center.y, 20, 20 );	
+			}			
+		}		
 	}
 	
-	if ( playerTree != null ) playerTree.draw( context );
-	
-	if ( clientPlayer != null && clientPlayer.obstructed && clientPlayer.occluder != null ) {
-		context.fillStyle = 'purple';
-		context.fillRect( clientPlayer.occluder.center.x, clientPlayer.occluder.center.y, 20, 20 );
-	}
+	if ( playerTree != null ) playerTree.draw( context, function ( node ) { return node.tested || !(keyHeld(KEY.F) || keyHeld( KEY.G ) ); } );
 }
+
+// Friday I'll see her. Here's hoping...
 
 var team1Name = '';
 var team2Name = '';
@@ -440,7 +459,6 @@ var testPlayersAgainstTree = function( players, tree ) {
 		if ( tree != null ) player.testAgainstTree( tree, player == clientPlayer, player );
 	}
 }
-
 
 var drawKey = function(name, posX, posY, width, height) {
 	var radius = 3;

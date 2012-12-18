@@ -41,10 +41,6 @@ var clientEntity = function(pos, objtype, side) {
 	this.velZ = 0;
 	
 	this.updateSides();
-	this.maxLeft = 0;
-	this.maxRight = 0;
-	this.maxTop = 0;
-	this.maxBottom = 0;
 }
 
 // Update intrinsic values of the entity
