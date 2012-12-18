@@ -12,6 +12,10 @@ Vec2.prototype.dot = function(v) {
 	return this.x * v.x + this.y * v.y;
 }
 
+Vec2.prototype.cross = function( v ) {
+	return this.x * v.y - this.y * v.x;
+}
+
 Vec2.prototype.set = function(v) {
 	this.x = v.x;
 	this.y = v.y;
@@ -93,8 +97,8 @@ Vec2.prototype.rotate = function(a) {
 	var x = this.x;
 	var y = this.y;
 
-	this.x = x * Math.cos(a) - y * Math.sin(a);
-	this.y = x * Math.sin(a) + y * Math.cos(a);
+	this.x = x * Math.cos(a) + y * Math.sin(a);
+	this.y = x * -Math.sin(a) + y * Math.cos(a);
 
 	return this;
 }

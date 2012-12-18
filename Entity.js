@@ -48,10 +48,10 @@ Entity.prototype.updateCenter = function() {
 
 // Check for overlap with another object (both are modeled as rectangles with (x, y) in the top left corner)
 Entity.prototype.overlaps = function(otherObject) {
-	if (	this.pos.x + this.width  + this.vel.x > otherObject.pos.x 		       + otherObject.vel.x &&
-		this.pos.x		 + this.vel.x < otherObject.pos.x + otherObject.width  + otherObject.vel.x &&
+	if (this.pos.x + this.width  + this.vel.x > otherObject.pos.x 		       + otherObject.vel.x &&
+		this.pos.x		 		 + this.vel.x < otherObject.pos.x + otherObject.width  + otherObject.vel.x &&
 		this.pos.y + this.height + this.vel.y > otherObject.pos.y 		       + otherObject.vel.y &&
-		this.pos.y 		 + this.vel.y < otherObject.pos.y + otherObject.height + otherObject.vel.y ) {
+		this.pos.y 			 	 + this.vel.y < otherObject.pos.y + otherObject.height + otherObject.vel.y ) {
 		return true;
 	}	
 

@@ -33,9 +33,10 @@ var Man = function(pos, side) {
 	Entity.call( this, pos, type.player, side );
 	
 	this.speed = 0;
-	this.runSpeed = 8;
+	this.runSpeed = 2;
 	this.topSpeed = 0;
 	this.sprintSpeed = 15;
+	this.tackleSpeed = 15;
 	
 	this.class = CLASS.MIDFIELDER;
 	
@@ -108,7 +109,7 @@ Man.prototype.attemptAction = function(action) {
 		case ACT.SLIDE:
 			// Slide Tackle
 			this.action = ACT.SLIDE;
-			this.vel.add(this.faceDir.times(15));
+			this.vel.add(this.faceDir.times(this.tackleSpeed));
 			break;
 		case ACT.PUNT:
 			// Punt
@@ -361,6 +362,7 @@ Man.prototype.makePacket = function() {
 		clientid : this.clientid,
 		type : 	this.type,
 		pos : 	 	this.pos.clip(),
+		destPos :	this.destPos.clip(),
 		vel :  		this.vel,
 		z : 	 	this.z,
 		velZ :	 	this.velZ,

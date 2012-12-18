@@ -29,6 +29,7 @@ currentRoom - update current room
 listentry - add entry to the list of active games
 ready - start game
 marco - respond to ping request
+debugStatus - whether we are in debug mode
 
 (In the current game...) 
 player - create/update a player
