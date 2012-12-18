@@ -79,6 +79,14 @@ Vec2.prototype.flip = function() {
 	return this.scale(-1);
 }
 
+Vec2.prototype.swap = function() {
+	var temp = this.x;
+	this.x = this.y;
+	this.y = temp;
+	
+	return this;
+}
+
 Vec2.prototype.length = function() {
 	return Math.sqrt(this.x * this.x + this.y * this.y);
 }
