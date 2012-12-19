@@ -11,6 +11,7 @@ var type = {
 	goalieBox : { name: 'goalieBox', width: dims.goalieBoxDepth , height: dims.goalieBoxWidth, color: 'purple' },
 	goalSide  : { name: 'goalSide', width: dims.sidelineWidth, height: dims.postWidth },
 	goalBack  : { name: 'goalBack', width: dims.postWidth, height: dims.goalWidth },
+	bounds	  : { name: 'bounds', width: dims.fieldLength - dims.backlineWidth * 2, height: dims.fieldWidth - dims.sidelineWidth * 2, color: 'green' }
 }
 
 module.exports = type;

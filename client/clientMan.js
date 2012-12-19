@@ -38,22 +38,36 @@ clientMan.prototype.testAgainstTree = function( playerTree, mark, bounds ) {
 	this.obstructed = playerTree.isContainedBy( this.sightLine, mark );
 	
 	// We are occluded and have to go a different direction
-	if ( this.obstructed && playerTree.occluder != null ) {
+	if ( this.obstructed && playerTree.occluder != null && bounds != null ) {
 		this.occluder = playerTree.occluder;
 		
-		var v = this.sightLine.toPos.minus( this.sightLine.fromPos ).swap();//.normalize();
-		v.y *= -1;
+		var v = this.sightLine.toPos.minus( this.sightLine.fromPos ).swap().normalize().scale(300);
+		v.y *= -1
+		var v2 = v.copy().flip();
 		
-		this.leftOption = new SightLine( this.occluder.center, this.occluder.center.plus( v ) );
-		this.rightOption = new SightLine( this.occluder.center, this.occluder.center.plus( v.flip() ) );
+		this.leftOption = new SightLine( this.occluder.center, bounds.clip( this.occluder.center.plus( v ) ) );
+		this.rightOption = new SightLine( this.occluder.center, bounds.clip( this.occluder.center.plus( v2 ) ) );
+		
+		var leftLen = -1;
 		
 		if ( playerTree.isContainedBy( this.leftOption, false ) && playerTree.occluder != null ) {
 			this.leftOccluder = playerTree.occluder;
+			leftLen = this.occluder.center.distanceTo( this.leftOccluder.center );
 			this.interDestPos = this.occluder.center.plus( this.leftOccluder.center ).scale( 0.5 );
+		} else {
+			leftLen = this.occluder.center.distanceTo( this.leftOption.toPos );
+			this.interDestPos = this.occluder.center.plus( this.leftOption.toPos ).scale( 0.5 ); 
 		}
+		
 		if ( playerTree.isContainedBy( this.rightOption, false ) && playerTree.occluder != null ) {
 			this.rightOccluder = playerTree.occluder;
-			this.interDestPos = this.occluder.center.plus( this.rightOccluder.center ).scale( 0.5 );
+			if ( leftLen == -1 || this.occluder.center.distanceTo( this.rightOccluder.center ) < leftLen ) {
+				this.interDestPos = this.occluder.center.plus( this.rightOccluder.center ).scale( 0.5 );	
+			}
+		} else {
+			if ( leftLen == -1 || this.occluder.center.distanceTo( this.rightOption.toPos ) < leftLen ) {
+				this.interDestPos = this.occluder.center.plus( this.rightOption.toPos ).scale( 0.5 ); 				
+			}
 		}
 	} else {
 		this.interDestPos = null;

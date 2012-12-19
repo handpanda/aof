@@ -27,6 +27,7 @@ var Field = function() {
 	this.rightGoal = 	new Zone(new Vec2(A - C, B / 2 - dims.goalWidth / 2), type.goal, 'right');
 	this.rightGoalieBox = 	new Zone(new Vec2(A - C - dims.goalieBoxDepth, B / 2 - dims.goalieBoxWidth / 2), type.goalieBox, 'right');
 	this.bottomSideline = 	new Zone(new Vec2(C, B - D), type.sideline, 'right');	
+	this.bounds = 			new Zone(new Vec2(C, D), type.bounds, 'none');
 
 	this.zones = [];
 
@@ -39,6 +40,7 @@ var Field = function() {
 	this.zones.push(this.rightGoal);
 	this.zones.push(this.rightGoalieBox);
 	this.zones.push(this.bottomSideline);
+	this.zones.push(this.bounds);
 
 	// Set up physical walls on the field (the goals)
 	this.barriers = [];

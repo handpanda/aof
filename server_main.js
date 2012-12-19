@@ -6,8 +6,8 @@ var http = require('http');
 
 // Command line options and defaults	
 var argv = require('optimist')
-					.default('h', 8)
-					.default('v', 3)
+					.default('h', 4)
+					.default('v', 2)
 					.default('debug', false)
 					.default('local', false)
 					.argv;

@@ -121,6 +121,15 @@ Game.prototype.startGame = function() {
 	this.stopTimer = 0;
 }
 
+Game.prototype.submitPath = function( id, pos ) {
+	for ( p in this.players ) {
+		if ( this.players[p].id == id ) {
+			if ( pos == null ) this.players[p].path = [];
+			else this.players[p].path = [pos];
+		}
+	}
+}
+
 /*
 	React to some game event
 */
@@ -236,7 +245,7 @@ Game.prototype.updatePlayers = function() {
 
 			// Determine what the player "sees"
 			var anchorOffset = this.ball.pos.minus(player.anchor);
-			var newAnchorPos = player.anchor.plus(new Vec2( anchorOffset.x * 0.50, 0 )); // "Home" position
+			var newAnchorPos = player.anchor.plus(new Vec2( anchorOffset.x * 0.30, 0 )); // "Home" position
 			var newGoalPos;			
 
 			switch (player.side) { 

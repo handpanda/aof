@@ -33,10 +33,10 @@ var Man = function(pos, side) {
 	Entity.call( this, pos, type.player, side );
 	
 	this.speed = 0;
-	this.runSpeed = 2;
+	this.runSpeed = 8;
 	this.topSpeed = 0;
-	this.sprintSpeed = 15;
-	this.tackleSpeed = 15;
+	this.sprintSpeed = 10;
+	this.tackleSpeed = 10;
 	
 	this.class = CLASS.MIDFIELDER;
 	
@@ -134,8 +134,6 @@ Man.prototype.generateBehaviors = function() {
 	var distBallToAnchor = this.envInfo.ballPos.distanceTo( this.envInfo.anchorPos );
 	var distToTarget = this.pos.distanceTo( targetPos );
 	var shouldAttack = !(!this.envInfo.isBallFree && this.envInfo.ballSide == this.side);
-	
-	this.path = [];
 	
 	// Movement
 	if (this.hasBall) {

@@ -30,6 +30,10 @@ var time = 0;
 var gameStopped = false;
 var gameEvent = null;
 
+// Can't stop thinking about her. Kind of debilitating
+
+var bounds = null;
+
 var scrollBox = null;
 
 var currentScreen = screen.LIST;
@@ -115,7 +119,14 @@ $(document).ready(function() {
 	socket.on('zone', function(data) {
 		zones.push(new clientZone(new Vec2(0, 0), type.ball));
 		zones[zones.length - 1].grab(data);
-		console.log("zone");
+		
+		zones[zones.length - 1].updateSides();
+		
+		if ( data.type.name == type.bounds.name ) {
+			bounds = zones[zones.length - 1];
+		}
+		
+		console.log(data);
 	});
 
 	socket.on('team', function(data) {
@@ -210,6 +221,8 @@ $(document).ready(function() {
 
 	socket.on('marco', function(data) {
 		socket.emit('polo', null);
+	
+		sendClientPathPackets();	
 	});
 
 	document.onmousemove = mouseMoveHandler;
@@ -315,10 +328,6 @@ var routeAround = function( point, approach ) {
 	context.fillRect( clientPlayer.pos.x, clientPlayer.pos.y, 20, 20 );
 }
 	
-var findRoute = function( context ) {
-	
-}
-
 var debugDraw = function( context ) {
 	if ( keyHeld( KEY.G ) ) { 
 		for (p in players) {
@@ -371,6 +380,14 @@ var switchScreen = function(toScreen) {
 	menu.refresh( scrollBox );
 }
 
+var sendClientPathPackets = function() {
+	for ( p in players ) {
+		var player = players[p];
+		
+		socket.emit('playerpath', { id: player.id, pos: player.interDestPos });
+	}
+}
+
 var attemptToJoinGame = function(id) {
 	clearInterval(updateInterval);
 
@@ -405,6 +422,8 @@ var leaveGame = function() {
 var updateInterval;
 
 var update = function() {
+	frames++;
+	
 	if ( overlay != null ) socket.emit( 'waiting', null );
 
 	menu.update( scrollBox );
@@ -456,7 +475,7 @@ var testPlayersAgainstTree = function( players, tree ) {
 	for ( p in players ) {
 		var player = players[p];		
 		
-		if ( tree != null ) player.testAgainstTree( tree, player == clientPlayer, player );
+		if ( tree != null ) player.testAgainstTree( tree, player == clientPlayer, bounds );
 	}
 }
 
@@ -664,6 +683,15 @@ var drawField = function( context ) {
 	}
 }
 
+var fps = 0;
+var frames = 0;
+
+var timer = function() {
+	fps = frames;
+	frames = 0;
+}
+
+setInterval( timer, 1000 );
 
 document.onkeydown = keyDownHandler;
 document.onkeyup = keyUpHandler;

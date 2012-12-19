@@ -8,7 +8,7 @@ var SightLine = function( fromPos, toPos ) {
 	
 	this.angle = Math.atan2( this.toPos.y - this.fromPos.y, this.toPos.x - this.fromPos.x );	
 	this.width = toPos.distanceTo( this.fromPos );
-	this.height = 20;
+	this.height = 40;
 	
 	var offset = 20;
 	

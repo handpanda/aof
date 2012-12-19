@@ -4,6 +4,12 @@ var ACT = require('./Act.js');
 
 var clientnum = 0;
 
+var KEYSTATE = {
+	UP : 0,
+	HIT : 1,
+	HELD : 2,
+};	
+
 var AOFClient = function( ioClient ) {
 	SocketIOClient.call( this, ioClient );
 	
@@ -127,6 +133,8 @@ var AOFClient = function( ioClient ) {
 			client.player.inputX( data.x );
 			client.player.inputC( data.c );
 			client.player.inputV( data.v );
+			
+			if ( data.z == KEYSTATE.HIT ) data.z = KEYSTATE.HELD;
 		}
 	});
 	
@@ -141,6 +149,8 @@ var AOFClient = function( ioClient ) {
 			client.player.inputX( data[KEY.X] );
 			client.player.inputC( data[KEY.C] );
 			client.player.inputV( data[KEY.V] );
+			
+			if ( data.z == KEYSTATE.HIT ) data.z = KEYSTATE.HELD;
 		}
 		
 		if (data[KEY.E] == KEYSTATE.HIT) {
@@ -150,6 +160,12 @@ var AOFClient = function( ioClient ) {
 		}
 	});	
 
+	this.on('playerpath', function(data) {
+		if ( client.game != null ) {
+			client.game.submitPath( data.id, data.pos );
+		}
+	});
+		
 	// Client responds to ping
 	this.on('polo', function(data) {
 		client.latency = client.msecsSinceLastPing;

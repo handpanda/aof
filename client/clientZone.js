@@ -10,6 +10,8 @@ clientZone.prototype.clip = function( vec ) {
 	if ( vec.x > this.right ) vec.x = this.right;
 	if ( vec.y < this.top ) vec.y = this.top;
 	if ( vec.y > this.bottom ) vec.y = this.bottom;
+	
+	return vec;
 }
 
 clientZone.prototype.draw = function( context ) {
