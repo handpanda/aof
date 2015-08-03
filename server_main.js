@@ -11,7 +11,9 @@ var argv = require('optimist')
 					.default('debug', false)
 					.default('local', false)
 					.argv;
-					
+		
+var PORT_NO = 4000;
+			
 var hPlayers = argv.h,
 	vPlayers = argv.v,
 	inDebugMode = argv.debug,
@@ -55,7 +57,7 @@ var server = http.createServer(function(request, response) {
 	});
 
 	var rs = fs.createReadStream(filePath).pipe( response );
-}).listen(4000);
+}).listen(PORT_NO);
 
 var sio = io.listen(server, {log: 'false'});
 
@@ -69,6 +71,8 @@ lobby.setDefaultPlayerCount( hPlayers, vPlayers );
 
 sio.sockets.on('connection', function(client) {
 	
+	console.log("New Client");
+
 	newClient = new AOFClient( client );
 	clients.push( newClient );
 
