@@ -1,3 +1,5 @@
+var grassImg = new RegularImage( "img/grass.png" );
+
 var clientZone = function(pos, objtype, side) {
 	clientEntity.call( this, pos, objtype, side );
 }
@@ -25,6 +27,11 @@ clientZone.prototype.draw = function( context ) {
 			switch (this.type.name) {
 				case type.field.name:
 					context.fillRect(0, 0, this.width, this.height);
+					for ( var x = 0; x < this.width; x += grassImg.image.width ) {
+						for ( var y = 0; y < this.height; y += grassImg.image.height ) {
+							//grassImg.draw( context, x, y, 1.0 );
+						}
+					}
 
 					context.strokeStyle = "white";
 					context.lineWidth = dims.borderWidth;
@@ -45,7 +52,7 @@ clientZone.prototype.draw = function( context ) {
 
 					context.beginPath();
 					context.arc(dims.fieldLength / 2, dims.fieldWidth / 2, dims.centerRadius, 0, 2 * Math.PI, false);
-					context.stroke();						
+					context.stroke();	
 					break;
 				case type.goalieBox.name:
 					context.strokeStyle = 'white';

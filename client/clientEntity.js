@@ -31,6 +31,7 @@ var clientEntity = function(pos, objtype, side) {
 	this.width =	this.type.width;
 	this.height = 	this.type.height;
 	this.id = -1;
+	this.team = null;
 	this.clientid = -1;
 	this.latency = 0;
 	this.msecsSinceLastPing = 0;
@@ -40,6 +41,7 @@ var clientEntity = function(pos, objtype, side) {
 	this.side = 	side;
 	this.z = 0;
 	this.velZ = 0;
+	this.sprinting = false;
 	
 	this.updateSides();
 }
@@ -94,15 +96,18 @@ clientEntity.prototype.drawRect = function( context ) {
 clientEntity.prototype.grab = function(data) {
 	this.type = 	data.type;
 	this.pos = 	 	data.pos;
+	this.team =   data.team;
 	this.z = 	 	data.z;
 	this.velZ =	 	data.velZ;
 	this.width = 	data.width;
 	this.height = 	data.height;	
 	this.angle = 	data.angle;
+	this.dir = 	data.dir;
 	this.side = 	data.side;
 	this.action = 	data.action;
 	this.latency = 	data.latency;
 	this.stamina =	data.stamina;
+	this.sprinting = data.sprinting;
 	this.msecsSinceLastPing = data.msecsSinceLastPing;
 }
 

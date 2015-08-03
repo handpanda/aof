@@ -24,6 +24,7 @@ var Entity = function(pos, objtype, side) {
 	this.msecsSinceLastPing = 0;
 	this.latency = 0;
 	this.angle = 	0.0;
+	this.dir = 0;
 	this.center =   new Vec2(this.pos.x + this.width / 2, this.pos.y + this.width / 2);
 	this.centerToPos = this.center.minus(this.pos);
 	this.faceDir = 	new Vec2(Math.cos(this.angle), Math.sin(this.angle));

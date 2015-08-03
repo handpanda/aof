@@ -79,7 +79,7 @@ Game.prototype.addAIPlayers = function( hPlayers, vPlayers ) {
 	// Create AI players for each team
 	for (r = 0; r < vPlayers; r++) {
 		for (c = 0; c < hPlayers; c++) {
-			var player = new Man(new Vec2(fieldL + (c + 1) * fieldW / (hPlayers + 2), fieldT + (r + 1) * fieldH / (vPlayers + 2)), (c < hPlayers / 2) ? 'left' : 'right' );
+			var player = new Man(new Vec2(fieldL + (c + 1) * fieldW / (hPlayers + 2), fieldT + (r + 1) * fieldH / (vPlayers + 2)), (c < hPlayers / 2) ? 'left' : 'right', (c < hPlayers / 2) ? this.team1.nation : this.team2.nation );
 			player.enableAuto();
 			player.setAnchor(player.pos, dims.fieldWidth / 3);
 
@@ -397,7 +397,7 @@ Game.prototype.updateBallHolder = function() {
 }
 
 Game.prototype.getClientData = function() {
-	return {id: this.id, team1Name: this.team1.name, team2Name: this.team2.name};
+	return {id: this.id, team1Nation: this.team1.nation, team2Nation: this.team2.nation };
 }
 
 module.exports = Game;

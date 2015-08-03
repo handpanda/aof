@@ -37,7 +37,7 @@ AOFScrollBox.prototype.setCurrentRoom = function( room ) {
 }
 
 AOFScrollBox.prototype.calcValues = function() {
-	this.canvas.width = window.innerWidth * 0.9;
+	this.canvas.width = this.canvas.parentElement.offsetWidth;//window.innerWidth * 0.9;
 	this.canvas.height = window.innerHeight * 0.9;
 
 	this.canvasDiagonal = Math.sqrt( this.canvas.width * this.canvas.width + this.canvas.height * this.canvas.height );	

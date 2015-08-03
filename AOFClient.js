@@ -33,7 +33,7 @@ var AOFClient = function( ioClient ) {
 	
 	// Client wants to add a game
 	this.on('addgame', function(data) {
-		console.log('/addgame/: ' + 'Client ' + client.ident + ' requested to add game: ' + data.team1 + ' v ' + data.team2 );		
+		console.log('/addgame/: ' + 'Client ' + client.ident + ' requested to add game: ' + data.team1.name + ' v ' + data.team2.name );		
 		
 		var id = client.lobby.addGame( data.team1, data.team2 );
 		
@@ -63,7 +63,7 @@ var AOFClient = function( ioClient ) {
 		console.log(msg + 'succeeded');
 		client.emit('joinstatus', { succeed: true, gameId: data, reason: '' });
 
-		var player = new Man(new Vec2(0, 0), clientnum % 2 ? 'left' : 'right');
+		var player = new Man(new Vec2(0, 0), clientnum % 2 ? 'left' : 'right', clientnum % 2 ? client.game.team1.nation: client.game.team2.nation);
 
 		player.runSpeed = 8;
 

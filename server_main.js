@@ -39,9 +39,14 @@ var server = http.createServer(function(request, response) {
 	var filePath = '.' + request.url;
 	var extname = path.extname(filePath);
 
+	console.log( extname );
+
 	switch (extname) {
-		case 'js':
+		case '.js':
 			contentType = 'text/javascript';
+			break;
+		case '.css':
+			contentType = 'text/css';
 			break;
 	}
 
@@ -49,8 +54,7 @@ var server = http.createServer(function(request, response) {
 		'Content-Type': contentType
 	});
 
-	var rs = fs.createReadStream(filePath);
-	util.pump(rs, response);
+	var rs = fs.createReadStream(filePath).pipe( response );
 }).listen(4000);
 
 var sio = io.listen(server, {log: 'false'});

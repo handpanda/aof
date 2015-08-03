@@ -4,17 +4,17 @@
 	One of the groups of players in a game
 */
 
-var Team = function(name, side) {
-	this.name = name;
+var Team = function(nation, side) {
 	this.side = side;
+	this.nation = nation;
 }
 
-
-
-
-
-
-var names = [ 'Confederate States of America', 'Golden Horde', 'Dnieper Cossacks', 'Prussians', 'Holy Roman Empire', 'Spanish Empire', 'Polish Home Army', 'French Resistance', 'Barbary Corsairs' ]; 
+var nations = [
+	pru = { name: 'Dnieper Cossacks', img: 'img/cossacks50.png' },
+	cos = { name: 'Kingdom of Prussia', img: 'img/prussia50.png' },
+	pol = { name: 'Polish Home Army', img: 'img/poland50.png' },
+	swe = { name: 'Swedish Empire', img: 'img/sweden50.png' },
+]
 
 module.exports.Team = Team;
-module.exports.names = names;
+module.exports.nations = nations;

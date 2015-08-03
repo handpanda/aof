@@ -102,7 +102,10 @@ MenuElement.prototype.draw = function(context) {
 						context.rotate( -Math.PI / 4 );
 						context.translate( -this.diagonal, 0);
 						context.fillStyle = 'white';
+						context.globalAlpha = 0.5;
+
 						context.fillRect( 0, this.wipeY, this.diagonal * 2, this.diagonal);
+						context.globalAlpha = 1.0;
 					context.restore();
 			context.restore();
 

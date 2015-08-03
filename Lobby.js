@@ -18,25 +18,25 @@ Lobby.prototype.setDefaultPlayerCount = function( hPlayers, vPlayers ) {
 }
 
 // Make new game between two specific teams
-Lobby.prototype.addGame = function(team1Name, team2Name) {
-	var game = new Game(new team.Team(team1Name, 'left'), new team.Team(team2Name, 'right'), []);
+Lobby.prototype.addGame = function(team1Nation, team2Nation) {
+	var game = new Game(new team.Team(team1Nation, 'left'), new team.Team(team2Nation, 'right'), []);
 	game.addAIPlayers( this.hPlayers, this.vPlayers );
 	
 	this.games.push( game );
-	console.log('Lobby: ' + 'added game ' + game.id + ': ' + team1Name + ' v ' + team2Name );
+	console.log('Lobby: ' + 'added game ' + game.id + ': ' + team1Nation.name + ' v ' + team2Nation.name );
 	
 	return game.id;
 }
 	
 // Make a new game between two random teams
 Lobby.prototype.addRandomGame = function() {
-	var leftTeamName, rightTeamName;
-	leftTeamName = discrete.randElem(team.names);
+	var leftTeamNation, rightTeamNation;
+	leftTeamNation = discrete.randElem(team.nations);
 	do {
-		rightTeamName = discrete.randElem(team.names);
-	} while (rightTeamName == leftTeamName);
+		rightTeamNation = discrete.randElem(team.nations);
+	} while (rightTeamNation == leftTeamNation);
 
-	this.addGame(leftTeamName, rightTeamName);		
+	this.addGame(leftTeamNation, rightTeamNation);		
 }
 
 Lobby.prototype.getClientGameList = function() {

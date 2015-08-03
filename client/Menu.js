@@ -22,12 +22,6 @@ var Menu = function() {
 	this.y = 0;
 }	
 
-Menu.prototype.clearChosenEntries = function(name) {
-	for (l in this.elementList) {
-		if (this.elementList[l].nameMatches( name ) ) this.elementList[l].chosen = false;
-	}
-}
-
 Menu.prototype.clearGameList = function() {
 	this.gameList = [];
 }
@@ -47,22 +41,6 @@ Menu.prototype.addGame = function( game ) {
 	}
 }
 
-Menu.prototype.addListElement = function( elementType, internalName, displayName, data, func ) {
-	var elem = new MenuElement(	elementType,
-											internalName, 
-											displayName, 
-											new Vec2(menudims.list.xPos, this.y), 
-											this.buttonStyle,
-											data, 
-											func );
-										
-	this.elementList.push( elem );
-											
-	this.y += this.buttonStyle.height + this.interButtonSpacing;
-	
-	return elem;											
-}
-
 Menu.prototype.update = function( scrollBox ) {
 	for (l in this.elementList) {
 		var elem = this.elementList[l];
@@ -79,6 +57,8 @@ Menu.prototype.onMouseHit = function( ) {
 	}	
 }
 
+
+
 Menu.prototype.refresh = function( scrollBox ) {
 	this.elementList = [];
 	this.y = menudims.list.yPos + this.vScroll;
@@ -88,105 +68,123 @@ Menu.prototype.refresh = function( scrollBox ) {
 	console.log('refresh');
 	console.log(this.gameList.length);
 	
+	var team1image = document.getElementById("team1image");
+	var team2image = document.getElementById("team2image");
+
 	switch (currentScreen) {
 		case screen.TITLE:
 			console.log('title');
 			break;
 		case screen.LIST:
-			this.addListElement( 'spacer', '', '', { }, null );
-			this.addListElement( 'spacer', '', '', { }, null );
-			this.addListElement( 'spacer', '', '', { }, null );
+			var center = document.getElementById( "center" );
 
-			console.log('list');
+			center.innerHTML = "";
 
-			this.addListElement( 'title', 'title', 'AGE OF FOOTBALL', { }, null );
+			center.innerHTML += "AGE OF FOOTBALL";
 			
-			this.addListElement( 'spacer', '', '', { }, null );
-			
-			// Button to make a new game
-			this.addListElement( 'button', 'new game', 'New Game', { },
-						function() {
-							switchScreen(screen.NEWGAMETEAM1);
-						});
-
-			this.addListElement( 'spacer', '', '', { }, null );
-			
-			textbox = this.addListElement( 'textbox', 'listtitle', 'Join a Game', { }, null );
-			textbox.style.fill = 'white';
+			center.innerHTML += "<div class=\"row-fluid buffer\" style=\"background-color:purple\" onclick=\"switchScreen(screen.NEWGAMETEAM1)\"> \
+														New Game \
+														</div>";
 			
 			// List of games in progress
 			for (g in this.gameList) {
-				this.addListElement( 'button', 'game', this.gameList[g].team1Name + ' vs ' + this.gameList[g].team2Name, { id: this.gameList[g].id },
-							function() {
-								console.log( "button press");
-								attemptToJoinGame( this.data.id );
-							});
+				var game = this.gameList[g];
+
+				center.innerHTML += "<div class=\"row-fluid buffer\" style=\"background-color:purple;\" onclick=\"attemptToJoinGame(" + this.gameList[g].id + ");\">" +
+															this.gameList[g].team1Nation.name + ' vs ' + this.gameList[g].team2Nation.name +
+														"</div>";
 			}
 			break;
 		case screen.NEWGAMETEAM1:
 			console.log('new game');
 			
-			var menu = this;
-			
-			textbox = this.addListElement( 'textbox', 'team1', 'Team 1:', { }, null);
-			textbox.style.fill = 'white';
+			var menuholder = document.getElementById( "menuholder" );
+			var center = document.getElementById( "center" );
 
-			for (n in names) {
-				this.addListElement( 'button', 'team1', names[n],
-							{ },
-							function() {
-								team1Name = this.displayName;
-								menu.clearChosenEntries('team1');
-								this.chosen = true;
-							});
+			center.innerHTML = "";
+
+			center.innerHTML += "Choose Teams";
+
+			var row = document.createElement("div");
+			row.setAttribute("class", "row-fluid");
+			row.onclick = function() {
+				menuholder.style.top--;
+			};
+
+			var left = document.createElement("div");
+			left.setAttribute("class", "span6");
+
+			var right = document.createElement("div");
+			right.setAttribute("class", "span6");
+
+			//left.innerHTML += "Team 1";
+			//right.innerHTML += "Team 2";
+
+			center.appendChild(row);
+			row.appendChild(left);
+			row.appendChild(right);		
+
+			for (n in nations) {
+				var div = document.createElement("div");
+					div.setAttribute("class", "row buffer");
+					div.setAttribute("style", "background-color:purple");
+
+					div.teamNation = nations[n];
+					div.imageName = nations[n].img;
+
+					div.onclick = function() {
+						team1Nation = this.teamNation;
+						team1image.src = this.imageName;
+					};
+					div.innerHTML = nations[n].name;
+				left.appendChild(div);
 			}
-			
-			this.addListElement( 'spacer', '', '', { }, null );
-			this.addListElement( 'button', 'next', 'Next',
-						{ },
-						function() {
-							switchScreen( screen.NEWGAMETEAM2 );
-						});
-			
+
+			for (n in nations) {
+				var div = document.createElement("div");
+					div.setAttribute("class", "row buffer");
+					div.setAttribute("style", "background-color:purple");
+
+					div.teamNation = nations[n];
+					div.imageName = nations[n].img;
+
+					div.onclick = function() {
+						team2Nation = this.teamNation;
+						team2image.src = this.imageName;
+					};
+					div.innerHTML = nations[n].name;
+				right.appendChild(div);
+			}
+
+			var div = document.createElement("div");
+				div.setAttribute("class", "row buffer");
+				div.setAttribute("style", "background-color:purple");
+
+				div.onclick = function() {
+					attemptToAddGame(team1Nation, team2Nation);	
+					switchScreen(screen.LIST);
+				};
+
+				div.innerHTML = "Start";
+			center.appendChild( div );
+
 			break;
-		case screen.NEWGAMETEAM2:
-
-			var menu = this;
-
-			textbox = this.addListElement('textbox', 'team2', 'Team 2:', { }, null);	
-			textbox.style.fill = 'white';	
-
-			for (n in names) {
-				console.log(names[n]);
-				this.addListElement('button', 'team2', names[n],
-							{ },
-							function() {
-								team2Name = this.displayName;
-								menu.clearChosenEntries('team2');
-								this.chosen = true;
-							});
-			}
-			this.addListElement( 'spacer', '', '', { }, null );
-			this.addListElement( 'button', 'start', 'Start!',
-				{ },
-				function() {
-					attemptToAddGame(team1Name, team2Name);	
-				});
-
-			break;	
 		case screen.GAME:
-			console.log('game');
-			this.addListElement( 'button', 'exit', 'Back to Lobby',
-				{ },
-				function() {
+			var center = document.getElementById( "center" );
+
+			center.innerHTML = "";
+
+			var div = document.createElement("div");
+				div.setAttribute("class", "span12");
+				div.setAttribute("style", "background-color:purple");
+
+				div.onclick = function() {
 					leaveGame();
-				});
-			textbox = this.addListElement( 'textbox', 'status', '',
-				{ },
-				function() {
-					this.displayName = getGameStatusString();
-				});
-			textbox.style.fill = 'black';
+				};
+
+				div.innerHTML = "Back to Lobby";
+			center.appendChild( div );
+
 			break;
 	}
 	

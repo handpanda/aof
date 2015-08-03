@@ -101,7 +101,7 @@ $(document).ready(function() {
 			}
 		}
 		if (!found) {
-			players.push( new clientMan( new Vec2(0, 0), data.side) );
+			players.push( new clientMan( new Vec2(0, 0), data.side, data.team ) );
 			players[players.length - 1].clientid = data.clientid;
 			players[players.length - 1].id = data.id;
 			players[players.length - 1].setValues(data);
@@ -130,13 +130,15 @@ $(document).ready(function() {
 	});
 
 	socket.on('team', function(data) {
+		console.log( "Team " + data );
+
 		switch (data.side) {
 			case 'left':
-				leftTeam = new Team(data.name, data.side);
+				leftTeam = new Team(data.nation, data.side);
 				break;
 				
 			case 'right':
-				rightTeam = new Team(data.name, data.side);
+				rightTeam = new Team(data.nation, data.side);
 				break;
 		}	
 	});
@@ -367,9 +369,6 @@ var debugDraw = function( context ) {
 
 // Friday I'll see her. Here's hoping...
 
-var team1Name = '';
-var team2Name = '';
-
 var menu = new Menu();
 
 var switchScreen = function(toScreen) {
@@ -398,11 +397,11 @@ var attemptToJoinGame = function(id) {
 	socket.emit('join', gameid);
 }
 
-var attemptToAddGame = function(team1Name, team2Name) {
+var attemptToAddGame = function(team1Nation, team2Nation) {
 	clearInterval(updateInterval);
 	setInterval(update, 60);	
 
-	var data = {team1: team1Name, team2: team2Name};
+	var data = {team1: team1Nation, team2: team2Nation};
 
 	console.log('Add Game: ' + data.team1 + ' v ' + data.team2);
 	socket.emit('addgame', data);
@@ -441,9 +440,9 @@ var update = function() {
 }
 
 var getGameStatusString = function() {
-	return leftTeam.name + ' ' + leftScore + ' ' +
+	return leftTeam.nation.name + ' ' + leftScore + ' ' +
 			text.pad0(Math.floor(time / 60).toString(), 2) + ":" + text.pad0((time % 60).toString(), 2) + ' ' + 
-			rightTeam.name + ' ' + rightScore;
+			rightTeam.nation.name + ' ' + rightScore;
 }
 
 var updateBall = function() {
@@ -523,22 +522,10 @@ var render = function() {
 		
 		break;
 	case screen.LIST:
-		context.font = "24px bold";
-		
-		context.textAlign = 'left';
-		context.fillStyle = 'blue';
-		context.fillText("List of currently active games", 0, 50);		
-		
 		menu.draw( context );
 		break;
 	case screen.NEWGAMETEAM1:
-	case screen.NEWGAMETEAM2:
-		context.font = "24px bold";
-		
-		context.textAlign = 'left';
-		context.fillStyle = 'blue';
-		context.fillText("List of currently active games", 0, 50);		
-		
+	case screen.NEWGAMETEAM2:	
 		menu.draw( context );
 		break;
 	case screen.HOWTO:
@@ -641,7 +628,6 @@ var render = function() {
 			illustrateKey( "Z", " Kick", interval, 0 );
 			illustrateKey( "X", " Punt", interval * 2, 0 );
 			illustrateKey( "C", " Run", interval * 3, 0 );
-			illustrateKey( "V", " Call", interval * 4, 0 );
 			
 		context.restore();
 			
@@ -663,6 +649,15 @@ var drawField = function( context ) {
 		zones[z].draw(context);
 	}
 
+	if ( clientPlayer != null ) {
+		context.globalAlpha = 0.5;
+		context.fillStyle = 'green';
+		context.lineWidth = 20;
+		context.beginPath();
+		context.arc(clientPlayer.center.x, clientPlayer.center.y, 50, 0, Math.PI * 2, false);
+		context.fill();
+		context.globalAlpha = 1.0;
+	}
 	for (p in players) {
 		players[p].draw(context);
 	}
@@ -670,16 +665,6 @@ var drawField = function( context ) {
 	
 	for (z in zones) {
 		zones[z].drawOverlay(context);
-	}
-	
-	if ( clientPlayer != null ) {
-		context.globalAlpha = 0.5;
-		context.strokeStyle = 'orange';
-		context.lineWidth = 20;
-		context.beginPath();
-		context.arc(clientPlayer.center.x, clientPlayer.center.y, 50, 0, Math.PI * 2, false);
-		context.stroke();
-		context.globalAlpha = 1.0;
 	}
 }
 

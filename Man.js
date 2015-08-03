@@ -29,7 +29,7 @@ var kickState = {
 	kicking: 4,
 }
 
-var Man = function(pos, side) {
+var Man = function(pos, side, team) {
 	Entity.call( this, pos, type.player, side );
 	
 	this.speed = 0;
@@ -50,6 +50,8 @@ var Man = function(pos, side) {
 	this.stamina = this.maxStamina;
 	this.staminaUse = 2;
 	this.staminaRecovery = 1; 
+
+	this.team = team;
 	
 	this.destPos = new Vec2( 0, 0 );
 	
@@ -90,7 +92,7 @@ Man.prototype.attemptAction = function(action) {
 
 	switch (action) {
 		case ACT.STAND:
-		
+			this.action = ACT.STAND;
 			break;		
 		case ACT.RUN:
 			this.action = ACT.RUN;
@@ -152,6 +154,9 @@ Man.prototype.generateBehaviors = function() {
 		} else {
 			// Otherwise, return to position
 			this.destPos = this.envInfo.anchorPos;
+			if ( this.destPos.distanceTo( this.envInfo.anchorPos ) < 0.001 ) {
+				//this.attemptAction( ACT.STAND );
+			}
 		}					
 	}
 	
@@ -216,6 +221,7 @@ Man.prototype.updateState = function() {
 
 Man.prototype.updateAngle = function() {
 	this.angle = Math.atan2(this.faceDir.y, this.faceDir.x);
+
 }
 
 // Enable / disable AI control for a player
@@ -318,6 +324,7 @@ Man.prototype.lookAt = function(pos) {
 Man.prototype.goToward = function(pos) {
 	if (ACT.canAccelerate(this.action)) {
 		if ( this.pos.distanceTo( pos ) < this.runSpeed ) {
+			if ( this.pos.distanceTo( pos ) < 0.1 ) this.attemptAction( ACT.STAND );
 			this.pos.set( pos );
 		} else {
 			this.lookAt( pos );
@@ -359,6 +366,7 @@ Man.prototype.makePacket = function() {
 		id : 	this.id,
 		clientid : this.clientid,
 		type : 	this.type,
+		team: this.team,
 		pos : 	 	this.pos.clip(),
 		destPos :	this.destPos.clip(),
 		vel :  		this.vel,
@@ -371,6 +379,7 @@ Man.prototype.makePacket = function() {
 		action : 	this.action,
 		latency : 	this.latency,
 		stamina :	this.stamina,
+		sprinting : this.sprinting,
 		msecsSinceLastPing : this.msecsSinceLastPing,
 	}	
 }
