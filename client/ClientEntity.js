@@ -1,8 +1,9 @@
 /*
 
-	clientEntity.js - client-side entities 
+	ClientEntity.js - client-side entities 
 	
 */
+define( ["juego/Vec2", "dims", "Act"], function( Vec2, dims, ACT ) {
 
 // Specifications for Entity
 var type = {
@@ -22,7 +23,7 @@ var type = {
 /*
 	One of the Entity in the game - ball, player, field region
 */
-var clientEntity = function(pos, objtype, side) {
+var ClientEntity = function(pos, objtype, side) {
 	this.type = type.ball;
 	if ( objtype !== undefined ) this.type = 	objtype;
 	this.pos = new Vec2( 0, 0 );
@@ -47,7 +48,7 @@ var clientEntity = function(pos, objtype, side) {
 }
 
 // Update intrinsic values of the entity
-clientEntity.prototype.updateSides = function() {
+ClientEntity.prototype.updateSides = function() {
 	this.center.setValues( this.pos.x + this.width / 2, this.pos.y + this.height / 2 );	
 	
 	this.left = this.pos.x + this.vel.x;
@@ -57,7 +58,7 @@ clientEntity.prototype.updateSides = function() {
 }
 
 // Draw the object
-clientEntity.prototype.draw = function(context) {
+ClientEntity.prototype.draw = function(context) {
 	context.save();
 		context.translate(this.pos.x, this.pos.y);
 		context.save();
@@ -70,7 +71,7 @@ clientEntity.prototype.draw = function(context) {
 	context.restore();
 }
 
-clientEntity.prototype.drawRect = function( context ) {
+ClientEntity.prototype.drawRect = function( context ) {
 	context.save();
 		context.translate(this.pos.x, this.pos.y);
 		context.rotate( this.angle );
@@ -93,7 +94,7 @@ clientEntity.prototype.drawRect = function( context ) {
 }
 
 // Get updated values from the server
-clientEntity.prototype.grab = function(data) {
+ClientEntity.prototype.grab = function(data) {
 	this.type = 	data.type;
 	this.pos = 	 	data.pos;
 	this.team =   data.team;
@@ -112,7 +113,7 @@ clientEntity.prototype.grab = function(data) {
 }
 
 // Test whether this entity overlaps another
-clientEntity.prototype.overlaps = function( otherEntity ) {
+ClientEntity.prototype.overlaps = function( otherEntity ) {
 	var left1 = this.pos.x + this.vel.x;
 	var left2 = otherEntity.pos.x + ( otherEntity.vel.x < 0 ? otherEntity.vel.x : 0 );
 	var right1 = this.pos.x + this.width + this.vel.x;
@@ -135,7 +136,7 @@ clientEntity.prototype.overlaps = function( otherEntity ) {
 	return false;
 }
 
-clientEntity.prototype.containsPoint = function( point ) {
+ClientEntity.prototype.containsPoint = function( point ) {
 	var p = point.minus( this.pos );
 	p.rotate( this.angle );
 	p.add( this.pos );
@@ -144,7 +145,7 @@ clientEntity.prototype.containsPoint = function( point ) {
 	else return false;
 }
 
-clientEntity.prototype.hBound = function( point ) {
+ClientEntity.prototype.hBound = function( point ) {
 	var p = point.minus( this.pos );
 	p.rotate( this.angle );
 	p.add( this.pos );
@@ -154,7 +155,7 @@ clientEntity.prototype.hBound = function( point ) {
 	else return 0;	
 }
 
-clientEntity.prototype.vBound = function( point ) {
+ClientEntity.prototype.vBound = function( point ) {
 	var p = point.minus( this.pos );
 	p.rotate( this.angle );
 	p.add( this.pos );
@@ -164,7 +165,7 @@ clientEntity.prototype.vBound = function( point ) {
 	else return 0;	
 }
 
-clientEntity.prototype.setValues = function( values ) {
+ClientEntity.prototype.setValues = function( values ) {
 	if ( values === undefined ) return;
 	
 	for ( key in values ) {
@@ -183,3 +184,7 @@ clientEntity.prototype.setValues = function( values ) {
 		}
 	}
 }
+
+return ClientEntity;
+
+});

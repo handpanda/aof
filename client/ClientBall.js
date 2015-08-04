@@ -1,11 +1,13 @@
-var clientBall = function(pos, side) {
-	clientEntity.call( this, pos, type.ball, side );
+define (["client/ClientEntity"], function ( ClientEntity ) {
+
+var ClientBall = function(pos, side) {
+	ClientEntity.call( this, pos, type.ball, side );
 }
 
-clientBall.prototype = new clientEntity();
-clientBall.prototype.constructor = clientBall;
+ClientBall.prototype = new ClientEntity();
+ClientBall.prototype.constructor = ClientBall;
 
-clientBall.prototype.draw = function( context ) {
+ClientBall.prototype.draw = function( context ) {
 	//context.fillStyle = 'orange';
 	//context.fillRect( this.pos.x, this.pos.y, this.width, this.height );	
 	
@@ -26,3 +28,7 @@ clientBall.prototype.draw = function( context ) {
 		context.restore();
 	context.restore();		
 }
+
+return ClientBall;
+
+});

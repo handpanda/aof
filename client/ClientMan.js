@@ -1,50 +1,58 @@
-var noPalette = new Palette( [], [] );
-var prussianPalette = new Palette( [ new Color( 0  , 0  , 0  , 255 ),
-																		 new Color( 255, 255, 255, 255 ),
-																		 new Color( 240, 208, 192, 255 ),
-																		 new Color( 255, 0  , 0  , 255 ) ], 
-																	 [ new Color( 0  , 0  , 0  , 255 ),
-																		 new Color( 0  , 50 , 150 , 255 ),
-																		 new Color( 240, 208, 192, 255 ),
-																		 new Color( 50 , 50 , 50 , 255 ) ] );
-var polishPalette = new Palette( [	 new Color( 0  , 0  , 0  , 255 ),
-																		 new Color( 255, 255, 255, 255 ),
-																		 new Color( 240, 208, 192, 255 ),
-																		 new Color( 255, 0  , 0  , 255 ) ], 
-																	[	 new Color( 0  , 0  , 0  , 255 ),
-																		 new Color( 255, 255, 255, 255 ),
-																		 new Color( 240, 208, 192, 255 ),
-																		 new Color( 255, 0  , 0  , 255 ) ] );
-var swedishPalette = new Palette( [  new Color( 0  , 0  , 0  , 255 ),
-																		 new Color( 255, 255, 255, 255 ),
-																		 new Color( 240, 208, 192, 255 ),
-																		 new Color( 255, 0  , 0  , 255 ) ], 
-																	 [ new Color( 0  , 0  , 0  , 255 ),
-																		 new Color( 0  , 50 , 255, 255 ),
-																		 new Color( 240, 208, 192, 255 ),
-																		 new Color( 255, 200, 0  , 255 ) ] );
-var cossackPalette = new Palette( [  new Color( 0  , 0  , 0  , 255 ),
-																		 new Color( 255, 255, 255, 255 ),
-																		 new Color( 240, 208, 192, 255 ),
-																		 new Color( 255, 0  , 0  , 255 ) ], 
-																	 [ new Color( 0  , 0  , 0  , 255 ),
-																		 new Color( 150, 50 , 0  , 255 ),
-																		 new Color( 140, 108, 92 , 255 ),
-																		 new Color( 125, 30 , 90 , 255 ) ] );
+define (["client/ClientEntity", "juego/image"], function ( ClientEntity, image ) {
+
+var Palette = image.Palette;
+var RegularImage = image.RegularImage;
+var Animation = image.Animation;
+var AnimatedImage = image.AnimatedImage;
+var Color = image.Color;
+
+var noPalette = new image.Palette( [], [] );
+var prussianPalette = new image.Palette( [ 	new Color( 0  , 0  , 0  , 255 ),
+											new Color( 255, 255, 255, 255 ),
+											new Color( 240, 208, 192, 255 ),
+											new Color( 255, 0  , 0  , 255 ) ], 
+										 [ 	new Color( 0  , 0  , 0  , 255 ),
+											new Color( 0  , 50 , 150 , 255 ),
+											new Color( 240, 208, 192, 255 ),
+											new Color( 50 , 50 , 50 , 255 ) ] );
+var polishPalette = new image.Palette( [ 	new Color( 0  , 0  , 0  , 255 ),
+											new Color( 255, 255, 255, 255 ),
+											new Color( 240, 208, 192, 255 ),
+											new Color( 255, 0  , 0  , 255 ) ], 
+									   [ 	new Color( 0  , 0  , 0  , 255 ),
+											new Color( 255, 255, 255, 255 ),
+											new Color( 240, 208, 192, 255 ),
+											new Color( 255, 0  , 0  , 255 ) ] );
+var swedishPalette = new image.Palette( [	new Color( 0  , 0  , 0  , 255 ),
+											new Color( 255, 255, 255, 255 ),
+											new Color( 240, 208, 192, 255 ),
+											new Color( 255, 0  , 0  , 255 ) ], 
+										[	new Color( 0  , 0  , 0  , 255 ),
+											new Color( 0  , 50 , 255, 255 ),
+											new Color( 240, 208, 192, 255 ),
+											new Color( 255, 200, 0  , 255 ) ] );
+var cossackPalette = new image.Palette( [  	new Color( 0  , 0  , 0  , 255 ),
+											new Color( 255, 255, 255, 255 ),
+											new Color( 240, 208, 192, 255 ),
+											new Color( 255, 0  , 0  , 255 ) ], 
+										[ 	new Color( 0  , 0  , 0  , 255 ),
+											new Color( 150, 50 , 0  , 255 ),
+											new Color( 140, 108, 92 , 255 ),
+											new Color( 125, 30 , 90 , 255 ) ] );
 
 
-var manImg = new AnimatedImage( "img/player.png", 
+var manImg = new image.AnimatedImage( "img/player.png", 
 																16, 16, 0, 0, noPalette);
-var prussianImg = new AnimatedImage( "img/player.png", 
+var prussianImg = new image.AnimatedImage( "img/player.png", 
 																16, 16, 0, 0, 
 																prussianPalette );
-var polishImg = new AnimatedImage( "img/player.png", 
+var polishImg = new image.AnimatedImage( "img/player.png", 
 																16, 16, 0, 0, 
 																polishPalette );
-var cossackImg = new AnimatedImage( "img/player.png", 
+var cossackImg = new image.AnimatedImage( "img/player.png", 
 																16, 16, 0, 0, 
 																cossackPalette );
-var swedishImg = new AnimatedImage( "img/player.png", 
+var swedishImg = new image.AnimatedImage( "img/player.png", 
 																16, 16, 0, 0, 
 																swedishPalette );
 
@@ -93,8 +101,8 @@ var manAnim = {
 
 // It was a mistake
 
-var clientMan = function(pos, side, team) {
-	clientEntity.call( this, pos, type.player, side );
+var ClientMan = function(pos, side, team) {
+	ClientEntity.call( this, pos, type.player, side );
 	
 	this.hasBall = 	false;
 	
@@ -105,7 +113,7 @@ var clientMan = function(pos, side, team) {
 	
 	this.destPos = new Vec2( 0, 0 );
 	
-	this.sightLine = new clientEntity( new Vec2( 0, 0 ), type.none, '' );
+	this.sightLine = new ClientEntity( new Vec2( 0, 0 ), type.none, '' );
 	this.obstructed = false;
 	
 	this.occluder = null;
@@ -129,15 +137,15 @@ var clientMan = function(pos, side, team) {
 	if ( team.name == nations[1].name ) this.mainRunner.image = prussianImg;
 }
 
-clientMan.prototype = new clientEntity();
-clientMan.prototype.constructor = clientMan;
+ClientMan.prototype = new ClientEntity();
+ClientMan.prototype.constructor = ClientMan;
 
-clientMan.prototype.updateSightLine = function() {
+ClientMan.prototype.updateSightLine = function() {
 	this.sightLine = new SightLine( this.center, this.destPos );
 	this.obstructed = false;
 }
 
-clientMan.prototype.testAgainstTree = function( playerTree, mark, bounds ) {
+ClientMan.prototype.testAgainstTree = function( playerTree, mark, bounds ) {
 	this.occluder = null;
 	this.leftOption = null;
 	this.rightOption = null;
@@ -183,11 +191,11 @@ clientMan.prototype.testAgainstTree = function( playerTree, mark, bounds ) {
 	}
 }
 
-clientMan.prototype.testAgainstMan = function( man ) {
+ClientMan.prototype.testAgainstMan = function( man ) {
 	this.obstructed = this.sightLine.containsPoint( man.center );
 }
 
-clientMan.prototype.draw = function( context ) {
+ClientMan.prototype.draw = function( context ) {
 	this.pastPositions.push( this.pos );
 	if ( this.pastPositions.length > 10 ) this.pastPositions.pop();
 
@@ -252,3 +260,7 @@ clientMan.prototype.draw = function( context ) {
 				}
 	context.restore();
 }
+
+return ClientMan;
+
+});

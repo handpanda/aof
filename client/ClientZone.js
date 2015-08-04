@@ -1,13 +1,15 @@
-var grassImg = new RegularImage( "img/grass.png" );
+define (["client/ClientEntity", "juego/image"], function ( ClientEntity, image ) {
 
-var clientZone = function(pos, objtype, side) {
-	clientEntity.call( this, pos, objtype, side );
+var grassImg = new image.RegularImage( "img/grass.png" );
+
+var ClientZone = function(pos, objtype, side) {
+	ClientEntity.call( this, pos, objtype, side );
 }
 
-clientZone.prototype = new clientEntity();
-clientZone.prototype.constructor = clientZone;
+ClientZone.prototype = new ClientEntity();
+ClientZone.prototype.constructor = ClientZone;
 
-clientZone.prototype.clip = function( vec ) {
+ClientZone.prototype.clip = function( vec ) {
 	if ( vec.x < this.left ) vec.x = this.left;
 	if ( vec.x > this.right ) vec.x = this.right;
 	if ( vec.y < this.top ) vec.y = this.top;
@@ -16,7 +18,7 @@ clientZone.prototype.clip = function( vec ) {
 	return vec;
 }
 
-clientZone.prototype.draw = function( context ) {
+ClientZone.prototype.draw = function( context ) {
 	context.save();
 		context.translate(this.pos.x, this.pos.y);
 		context.save();
@@ -86,7 +88,7 @@ clientZone.prototype.draw = function( context ) {
 	context.restore();
 }
 
-clientZone.prototype.drawOverlay = function( context ) {
+ClientZone.prototype.drawOverlay = function( context ) {
 	context.save();
 		context.translate(this.pos.x, this.pos.y);
 		context.save();
@@ -142,3 +144,7 @@ clientZone.prototype.drawOverlay = function( context ) {
 		context.restore();
 	context.restore();
 }
+
+return ClientZone;
+
+});
