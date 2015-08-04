@@ -3,6 +3,7 @@
 	Entity.js - physical game Entity
 	
 */
+
 var dims = require("./dims.js");
 var type = require("./type.js");
 
@@ -13,9 +14,9 @@ var idstat = 0;
 */
 var Entity = function(pos, objtype, side) {
 	this.type = type.ball;
-	if ( objtype !== undefined ) this.type = 	objtype;
+	if ( objtype !== undefined ) this.type = objtype;
 	this.pos = new Vec2( 0, 0 );
-	if ( pos !== undefined ) this.pos = 	pos;
+	if ( pos !== undefined ) this.pos = pos;
 	this.width =	this.type.width;
 	this.height = 	this.type.height;
 	

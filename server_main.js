@@ -1,3 +1,13 @@
+// Override node.js require()
+/*var require = require('amdrequire');
+
+require.config({
+    paths: {
+
+    },
+    basePath: ".",
+});*/
+
 var http = require('http');
 	io   = require('socket.io');
 	fs   = require('fs');
@@ -41,7 +51,7 @@ var server = http.createServer(function(request, response) {
 	var filePath = '.' + request.url;
 	var extname = path.extname(filePath);
 
-	console.log( extname );
+	console.log( request.url );
 
 	switch (extname) {
 		case '.js':
