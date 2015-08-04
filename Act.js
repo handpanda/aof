@@ -1,3 +1,9 @@
+if (typeof define !== 'function') {
+    var define = require('amdefine')(module);
+}
+
+define( [], function() {
+
 var ACT = {
 	STAND: 0,
 	RUN: 1,
@@ -11,10 +17,9 @@ var ACT = {
 	/*
 	 * NEW ACTIONS NEED TO BE ADDED TO SWITCH STATEMENTS IN:
 	 * 
-	 * 	clientMan.draw() in clientMan.js
+	 * 	ClientMan.draw() in ClientMan.js
 	 *  Man.attemptAction() in Man.js
 	 */
-	
 	
 	// Can a player doing action A switch to action B?
 	// from:	STAND	SPRINT	RUN		KICK	SLIDE	PUNT
@@ -45,4 +50,6 @@ var ACT = {
 	}
 }
 
-module.exports = ACT;
+return ACT;
+
+});

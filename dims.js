@@ -1,6 +1,12 @@
-// Field reference dimensions
-// Object reference dimensions
+if (typeof define !== 'function') {
+    var define = require('amdefine')(module);
+}
+
+define( [], function() {
+
 var dims = {
+	
+	// Field reference dimensions
 	fieldLength : 2000,
 	fieldWidth : 1000,
 	goalWidth : 300,
@@ -13,6 +19,7 @@ var dims = {
 	borderWidth: 15,
 	centerRadius: 200,
 
+	// Object reference dimensions
 	manWidth : 40,
 	manHeight : 40,
 	manDepth : 30,
@@ -23,4 +30,6 @@ var dims = {
 	headLength : 30,
 }
 
-module.exports = dims;
+return dims;
+
+});
