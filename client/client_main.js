@@ -1,3 +1,37 @@
+require( [
+		// External libs
+		"jquery",
+		"socket.io/socket.io",
+
+		"juego/keyboard",
+		"juego/mouse",
+
+		// Shared with server
+		"screens",
+
+		// Client only
+		"client/AOFScrollBox",
+		"client/ClientMan",
+		"client/ClientBall",
+		"client/ClientZone",
+		"client/Menu"], function(
+
+		$,
+		io,
+
+		keyboard,
+		mouse,
+
+		screens,
+
+		AOFScrollBox,
+		ClientMan,
+		ClientBall,
+		ClientZone,
+		Menu) {
+
+console.log("Hello");
+
 var keys = {
 	left  : false,
 	right : false,
@@ -30,17 +64,17 @@ var time = 0;
 var gameStopped = false;
 var gameEvent = null;
 
-// Can't stop thinking about her. Kind of debilitating
-
 var bounds = null;
 
 var scrollBox = null;
 
-var currentScreen = screen.LIST;
+var currentScreen = screens.LIST;
 
 var overlay = null;
 
 var inDebugMode = false;
+
+var menu = new Menu();
 
 $(document).ready(function() {
 	scrollBox = new AOFScrollBox();
@@ -77,7 +111,7 @@ $(document).ready(function() {
 		if (data.succeed) {
 			console.log("Attempt to join game " + id + " succeeded");
 
-			switchScreen(screen.GAME);
+			switchScreen(screens.GAME);
 		} else {
 			console.log("Attempt to join game " + id + " failed");
 			console.log("Reason: " + data.reason);
@@ -101,7 +135,7 @@ $(document).ready(function() {
 			}
 		}
 		if (!found) {
-			players.push( new clientMan( new Vec2(0, 0), data.side, data.team ) );
+			players.push( new ClientMan( new Vec2(0, 0), data.side, data.team ) );
 			players[players.length - 1].clientid = data.clientid;
 			players[players.length - 1].id = data.id;
 			players[players.length - 1].setValues(data);
@@ -117,7 +151,7 @@ $(document).ready(function() {
 	});
 
 	socket.on('zone', function(data) {
-		zones.push(new clientZone(new Vec2(0, 0), type.ball));
+		zones.push(new ClientZone(new Vec2(0, 0), type.ball));
 		zones[zones.length - 1].grab(data);
 		
 		zones[zones.length - 1].updateSides();
@@ -144,7 +178,7 @@ $(document).ready(function() {
 	});
 
 	socket.on('ball', function(data) {
-		if (ball == null) ball = new clientBall(new Vec2(0, 0));
+		if (ball == null) ball = new ClientBall(new Vec2(0, 0));
 		ball.grab(data);
 	});
 
@@ -226,15 +260,8 @@ $(document).ready(function() {
 	
 		sendClientPathPackets();	
 	});
-
-	document.onmousemove = mouseMoveHandler;
-	document.onmousedown = mouseDownHandler;
-	document.onmouseup = mouseUpHandler;
-	document.onkeydown = keyDownHandler;
-	document.onkeyup = keyUpHandler;
 });	
 
-mousePos = new Vec2(0, 0);
 mousedown = false;
 
 var mouseMoveHandler = function(event) {
@@ -250,19 +277,11 @@ var mouseMoveHandler = function(event) {
 	mousePos.y -= scrollBox.canvas.offsetTop;
 }
 
-var mouseDownHandler = function(event) {
-	mousedown = true;
-	
+function menuMouseHit() {
 	menu.onMouseHit();
 }
 
-var mouseUpdater = function() {
-	mousedown = false;
-}
-
-var mouseUpHandler = function(event) {
-	mousedown = false;
-}
+document.addEventListener("juego-mouse-update", menuMouseHit);
 
 // Update the packet containing the player's keystroke information
 var prepareKeyPacket = function() {
@@ -367,17 +386,11 @@ var debugDraw = function( context ) {
 	if ( playerTree != null ) playerTree.draw( context, function ( node ) { return node.tested || !(keyHeld(KEY.F) || keyHeld( KEY.G ) ); } );
 }
 
-// Friday I'll see her. Here's hoping...
+// Reacts to switch screen event
 
-var menu = new Menu();
-
-var switchScreen = function(toScreen) {
-	if (toScreen == screen.LIST) socket.emit('list', null);
-
-	currentScreen = toScreen;
-
-	menu.refresh( scrollBox );
-}
+document.addEventListener( "switch-screen", function(e) {
+	if (e.toScreen == screens.LIST) socket.emit('list', null);
+}, true);
 
 var sendClientPathPackets = function() {
 	for ( p in players ) {
@@ -406,7 +419,7 @@ var attemptToAddGame = function(team1Nation, team2Nation) {
 	console.log('Add Game: ' + data.team1 + ' v ' + data.team2);
 	socket.emit('addgame', data);
 
-	switchScreen(screen.LIST);
+	switchScreen(screens.LIST);
 }
 
 var leaveGame = function() {
@@ -415,7 +428,7 @@ var leaveGame = function() {
 
 	socket.emit('leave', null);
 
-	switchScreen( screen.LIST );
+	switchScreen( screens.LIST );
 }	
 
 var updateInterval;
@@ -431,12 +444,12 @@ var update = function() {
 
 	if( clientPlayer != null ) clientPlayer.destPos = mousePos.plus( new Vec2( scrollBox.hScroll, scrollBox.vScroll ) );
 	updatePlayers();
-	updatePlayerTree( players );
-	testPlayersAgainstTree( players, playerTree );
+	//updatePlayerTree( players );
+	//testPlayersAgainstTree( players, playerTree );
 
 	render();
 	
-	mouseUpdater();
+	mouse.updateState( scrollBox.canvas );
 }
 
 var getGameStatusString = function() {
@@ -517,21 +530,21 @@ var render = function() {
 
 	context = scrollBox.getContext();
 
-	switch (currentScreen) {
-	case screen.TITLE:
+	switch (menu.currentScreen) {
+	case screens.TITLE:
 		
 		break;
-	case screen.LIST:
+	case screens.LIST:
 		menu.draw( context );
 		break;
-	case screen.NEWGAMETEAM1:
-	case screen.NEWGAMETEAM2:	
+	case screens.NEWGAMETEAM1:
+	case screens.NEWGAMETEAM2:	
 		menu.draw( context );
 		break;
-	case screen.HOWTO:
+	case screens.HOWTO:
 
 		break;
-	case screen.GAME:
+	case screens.GAME:
 		if ( inDebugMode ) socket.emit('debuginput', keyboardState);
 		else socket.emit('input', keys);
 		prepareKeyPacket();
@@ -633,7 +646,7 @@ var render = function() {
 			
 		menu.draw( context );
 		break;
-	case screen.RESULT:
+	case screens.RESULT:
 
 		break;
 	}
@@ -678,5 +691,4 @@ var timer = function() {
 
 setInterval( timer, 1000 );
 
-document.onkeydown = keyDownHandler;
-document.onkeyup = keyUpHandler;
+});

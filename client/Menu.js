@@ -1,3 +1,5 @@
+define( ["jquery", "screens"], function($, screens) {
+
 var menudims = {
 	list: { name: 'list', xPos: 0, yPos: 0, width: 500},
 	exitbutton: { name: 'exitbutton', xPos: 5, yPos: 5, width: 300},
@@ -10,6 +12,8 @@ var Menu = function() {
 	this.vScroll = 0;
 	this.interButtonSpacing = 6;
 	
+	this.currentScreen = screens.LIST;
+
 	this.buttonStyle = {};
 	this.statusString = "";
 	
@@ -49,6 +53,17 @@ Menu.prototype.update = function( scrollBox ) {
 	}
 }
 
+Menu.prototype.switchScreen = function( toScreen ) {
+	this.currentScreen = toScreen;
+
+	this.refresh();
+
+	var e = new Event( "switch-screen" );
+	e.toScreen = screens.LIST;
+
+	document.dispatchEvent(e);
+}
+
 Menu.prototype.onMouseHit = function( ) {
 	for (l in this.elementList) {
 		var elem = this.elementList[l];
@@ -59,7 +74,7 @@ Menu.prototype.onMouseHit = function( ) {
 
 
 
-Menu.prototype.refresh = function( scrollBox ) {
+Menu.prototype.refresh = function() {
 	this.elementList = [];
 	this.y = menudims.list.yPos + this.vScroll;
 	
@@ -71,31 +86,50 @@ Menu.prototype.refresh = function( scrollBox ) {
 	var team1image = document.getElementById("team1image");
 	var team2image = document.getElementById("team2image");
 
-	switch (currentScreen) {
-		case screen.TITLE:
+	switch (this.currentScreen) {
+		case screens.TITLE:
 			console.log('title');
 			break;
-		case screen.LIST:
-			var center = document.getElementById( "center" );
+		case screens.LIST:
+			var center = $( "#center" );
 
-			center.innerHTML = "";
+			center.empty();
 
-			center.innerHTML += "AGE OF FOOTBALL";
-			
-			center.innerHTML += "<div class=\"row-fluid buffer\" style=\"background-color:purple\" onclick=\"switchScreen(screen.NEWGAMETEAM1)\"> \
-														New Game \
-														</div>";
-			
+			center.append( "AGE OF FOOTBALL" );
+
+			var newGameButton = document.createElement( "div" );
+
+			newGameButton.setAttribute("class", "row-fluid buffer" );
+			newGameButton.setAttribute("style", "background-color:purple;");
+
+			var _this = this;
+
+			newGameButton.onclick = function() {
+				_this.switchScreen(screens.NEWGAMETEAM1);
+			}
+
+			newGameButton.innerHTML = "New Game";
+
+			center.append( $( newGameButton ) );
+
 			// List of games in progress
 			for (g in this.gameList) {
 				var game = this.gameList[g];
 
-				center.innerHTML += "<div class=\"row-fluid buffer\" style=\"background-color:purple;\" onclick=\"attemptToJoinGame(" + this.gameList[g].id + ");\">" +
-															this.gameList[g].team1Nation.name + ' vs ' + this.gameList[g].team2Nation.name +
-														"</div>";
+				var joinGameButton = document.createElement( "div" );
+
+				joinGameButton.setAttribute("class", "row-fluid buffer" );
+				joinGameButton.setAttribute("style", "background-color:purple;");
+				joinGameButton.onclick = function() {
+					attemptToJoinGame( game.id );
+				}
+
+				joinGameButton.innerHTML = this.gameList[g].team1Nation.name + " vs " + this.gameList[g].team2Nation.name;
+			
+				center.append( $( joinGameButton ) );
 			}
 			break;
-		case screen.NEWGAMETEAM1:
+		case screens.NEWGAMETEAM1:
 			console.log('new game');
 			
 			var menuholder = document.getElementById( "menuholder" );
@@ -162,14 +196,14 @@ Menu.prototype.refresh = function( scrollBox ) {
 
 				div.onclick = function() {
 					attemptToAddGame(team1Nation, team2Nation);	
-					switchScreen(screen.LIST);
+					this.switchScreen(screens.LIST);
 				};
 
 				div.innerHTML = "Start";
 			center.appendChild( div );
 
 			break;
-		case screen.GAME:
+		case screens.GAME:
 			var center = document.getElementById( "center" );
 
 			center.innerHTML = "";
@@ -187,8 +221,6 @@ Menu.prototype.refresh = function( scrollBox ) {
 
 			break;
 	}
-	
-	this.update( scrollBox );
 }
 
 Menu.prototype.setStatusString = function( string ) {
@@ -206,3 +238,7 @@ Menu.prototype.draw = function( context ) {
 	
 	context.restore();
 }
+
+return Menu;
+
+});
