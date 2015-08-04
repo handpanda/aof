@@ -6,38 +6,32 @@
 
 		<link href="./css/bootstrap.min.css" rel="stylesheet" type="text/css">
 
+		<script type="text/javascript" src="./require.js"></script>
+
 		<script type="text/javascript">
-			var require = function() { };
+			module = {};
+
+			require.config({
+			    baseUrl: "",
+			    paths: {
+			        // the left side is the module ID,
+			        // the right side is the path to
+			        // the jQuery file, relative to baseUrl.
+			        // Also, the path should NOT include
+			        // the '.js' file extension. This example
+			        // is using jQuery 1.9.0 located at
+			        // js/lib/jquery-1.9.0.js, relative to
+			        // the HTML page.
+			        //io: "https://cdn.socket.io/socket.io-1.3.5.js"
+			        jquery: "jquery-1.7.min",
+			    }
+			});
+
+			require(["client/client_main"], function(client_main) {
+
+			});
 		</script>
 
-		<script type="text/javascript" src="./jquery-1.7.min.js"></script>
-		<script type="text/javascript" src="/socket.io/socket.io.js"></script>
-		<script type="text/javascript" src="./Vec2.js"></script>
-		<script type="text/javascript" src="./Team.js"></script>
-		<script type="text/javascript" src="./text.js"></script>
-		<script type="text/javascript" src="./keyboard.js"></script>
-		<script type="text/javascript" src="./dims.js"></script>
-		<script type="text/javascript" src="./Act.js"></script>
-		<script type="text/javascript" src="./Room.js"></script>
-		<script type="text/javascript" src="./screen.js"></script>
-		<script type="text/javascript" src="./Event.js"></script>
-	
-		<script type="text/javascript" src="./juego.js/util.js"></script>	
-		<script type="text/javascript" src="./juego.js/image.js"></script>
-		<script type="text/javascript" src="./juego.js/ScrollBox.js"></script>
-		<script type="text/javascript" src="./juego.js/KDTree.js"></script>
-
-		<script type="text/javascript" src="./client/clientEntity.js"></script>
-		<script type="text/javascript" src="./client/clientMan.js"></script>
-		<script type="text/javascript" src="./client/clientBall.js"></script>
-		<script type="text/javascript" src="./client/clientZone.js"></script>
-		<script type="text/javascript" src="./client/anim.js"></script>
-		<script type="text/javascript" src="./client/Menu.js"></script>
-		<script type="text/javascript" src="./client/MenuElement.js"></script>
-		<script type="text/javascript" src="./client/SightLine.js"></script>
-		<script type="text/javascript" src="./client/AOFScrollBox.js"></script>
-		<script type="text/javascript" src="./client/client_main.js"></script>
-		
 		<style = type="text/css">
 			html {
 			  width:  100%;
