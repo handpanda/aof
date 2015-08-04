@@ -1,3 +1,5 @@
+define( ["juego/ScrollBox"], function( ScrollBox ) {
+
 var AOFScrollBox = function( params ) {
 	this.canvas = document.getElementById("main");
 	this.context = this.canvas.getContext("2d");
@@ -53,3 +55,7 @@ AOFScrollBox.prototype.calcValues = function() {
 		this.vPixels = this.currentRoom.height;
 	}	
 }
+
+return AOFScrollBox;
+
+});

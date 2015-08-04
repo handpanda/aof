@@ -1,5 +1,7 @@
+define (["client/ClientEntity"], function ( ClientEntity ) {
+
 var SightLine = function( fromPos, toPos ) {
-	clientEntity.call( this, new Vec2( 0, 0 ), type.none, '' );
+	ClientEntity.call( this, new Vec2( 0, 0 ), type.none, '' );
 	
 // those eyes dig deep
 	
@@ -33,5 +35,7 @@ var SightLine = function( fromPos, toPos ) {
 	this.maxBottom = Math.max( topLeft.y, topRight.y, bottomRight.y, bottomLeft.y );	
 }
 
-SightLine.prototype = new clientEntity();
+SightLine.prototype = new ClientEntity();
 SightLine.prototype.constructor = SightLine;
+
+});
