@@ -1,4 +1,8 @@
-var dims = require("./dims.js");
+if (typeof define !== 'function') {
+    var define = require('amdefine')(module);
+}
+
+define( ["./dims"], function( dims ) {
 
 // Specifications for Entity
 var type = {
@@ -14,4 +18,6 @@ var type = {
 	bounds	  : { name: 'bounds', width: dims.fieldLength - dims.backlineWidth * 2, height: dims.fieldWidth - dims.sidelineWidth * 2, color: 'green' }
 }
 
-module.exports = type;
+return type;
+
+});

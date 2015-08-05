@@ -1,3 +1,9 @@
+if (typeof define !== 'function') {
+    var define = require('amdefine')(module);
+}
+
+define ( [], function() {
+
 var Room = function(pos, width, height) {
 	// Dimensions are in units of tiles
 	this.pos = pos;
@@ -12,4 +18,6 @@ Room.prototype.grab = function(data) {
 	this.height = data.height;
 }
 
-module.exports = Room;
+return Room;
+
+});

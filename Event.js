@@ -1,3 +1,9 @@
+if (typeof define !== 'function') {
+    var define = require('amdefine')(module);
+}
+
+define( [], function() {
+
 var Event = function(side, eventtype) {
 	this.side = side;
 	this.type = eventtype;
@@ -11,4 +17,6 @@ Event.prototype.TYPE = {
 	ENDOFGAME: 4,
 }
 
-module.exports = Event;
+return Event;
+
+});
