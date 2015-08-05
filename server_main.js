@@ -29,15 +29,15 @@ var hPlayers = argv.h,
 	inDebugMode = argv.debug,
 	isLocal = argv.local;
 
-var Vec2 = require('./Vec2.js');
-var Entity = require('./Entity.js');
-var discrete = require('./discrete.js');
-var team = require('./Team.js');
-var Event = require('./Event.js');
-var Lobby = require('./Lobby.js');
-var Game = require('./Game.js');
-var Man = require('./Man.js');
-var AOFClient = require( './AOFClient.js' );
+var Vec2 = require('./Vec2');
+var Entity = require('./Entity');
+var discrete = require('./discrete');
+var team = require('./Team');
+var Event = require('./Event');
+var Lobby = require('./Lobby');
+var Game = require('./Game');
+var Man = require('./Man');
+var AOFClient = require( './AOFClient' );
 
 var MAX_LATENCY = 50; // milliseconds
 

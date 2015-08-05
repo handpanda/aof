@@ -27,8 +27,10 @@
 			    }
 			});
 
-			require(["client/client_main"], function(client_main) {
+			var client;
 
+			require(["client/client_main"], function( client_main ) {
+				client = client_main;
 			});
 		</script>
 
