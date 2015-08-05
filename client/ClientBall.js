@@ -1,7 +1,7 @@
-define (["client/ClientEntity"], function ( ClientEntity ) {
+define (["client/ClientEntity", "type"], function ( ClientEntity, entityType ) {
 
 var ClientBall = function(pos, side) {
-	ClientEntity.call( this, pos, type.ball, side );
+	ClientEntity.call( this, pos, entityType.ball, side );
 }
 
 ClientBall.prototype = new ClientEntity();

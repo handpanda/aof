@@ -1,4 +1,4 @@
-require( [
+define( [
 		// External libs
 		"jquery",
 		"socket.io/socket.io",
@@ -8,13 +8,19 @@ require( [
 
 		// Shared with server
 		"screens",
+		"type",
+		"Event",
+		"Room",
+		"Team",
 
 		// Client only
 		"client/AOFScrollBox",
 		"client/ClientMan",
 		"client/ClientBall",
 		"client/ClientZone",
-		"client/Menu"], function(
+		"client/Menu",
+		"client/anim1",
+		"client/anim2"], function(
 
 		$,
 		io,
@@ -23,66 +29,92 @@ require( [
 		mouse,
 
 		screens,
+		entityType,
+		Event,
+		Room,
+		Team,
 
 		AOFScrollBox,
 		ClientMan,
 		ClientBall,
 		ClientZone,
-		Menu) {
+		Menu,
+		anim1,
+		anim2) {
 
-console.log("Hello");
+var Client = function() {
 
-var keys = {
-	left  : false,
-	right : false,
-	up    : false,
-	down  : false,
-	z     : false,
-	x     : false,
-	c     : false,
+	this.keys = {
+		left  : false,
+		right : false,
+		up    : false,
+		down  : false,
+		z     : false,
+		x     : false,
+		c     : false,
+	}
+
+	this.socket = null;
+
+	this.ball = null;
+
+	this.playerid = 0;
+	this.clientPlayer = null;
+
+	this.gameid = -1;
+	this.players = [];
+	this.zones = [];
+
+	this.leftTeam = null;
+	this.rightTeam = null;
+
+	this.leftScore = 0;
+	this.rightScore = 0;
+	this.time = 0;
+	this.gameStopped = false;
+	this.gameEvent = null;
+
+	this.bounds = null;
+
+	this.scrollBox = null;
+
+	this.overlay = null;
+
+	this.inDebugMode = false;
+	this.menu = new Menu();
+
+	this.updateInterval = null;
+
+	this.fps = 0;
+	this.frames = 0;
+
+	var _this = this;
+
+	var timer = function() {
+		_this.fps = _this.frames;
+		_this.frames = 0;
+	}
+
+	setInterval( timer, 1000 );
+
 }
 
-var socket;
-
-var ball = null;
-
-var playerid = 0;
-var clientPlayer = null;
-
-var gameid = -1;
-var players = [];
-var zones = [];
-
-var playerTree = null;
-
-var leftTeam = null;
-var rightTeam = null;
-
-var leftScore = 0;
-var rightScore = 0;
-var time = 0;
-var gameStopped = false;
-var gameEvent = null;
-
-var bounds = null;
-
-var scrollBox = null;
-
-var currentScreen = screens.LIST;
-
-var overlay = null;
-
-var inDebugMode = false;
-
-var menu = new Menu();
+var client = null;
 
 $(document).ready(function() {
-	scrollBox = new AOFScrollBox();
+	client = new Client();
 
-	socket = new io.connect("http://localhost:4000");
+	console.log( client );
+
+	client.registerHandlers();
+
+	client.scrollBox = new AOFScrollBox();
+
+	client.socket = new io.connect("http://localhost:4000");
 	var entry_el = $('#entry');
 
-	socket.on('message', function(data) {
+
+	client.socket.on('message', function(data) {
 		//var data = message;
 
 		$('#log ul').append('<li>' + data + '</li>');
@@ -91,95 +123,108 @@ $(document).ready(function() {
 		entry_el.focus();
 	});
 
-	socket.on('debugMode', function(data) {
-		inDebugMode = data;
+	client.socket.on('debugMode', function(data) {
+		client.inDebugMode = data;
 	});
 
-	socket.on('playerid', function(data) {
-		playerid = data;
-		console.log('player ' + playerid);
+	client.socket.on('playerid', function(data) {
+		client.playerid = data;
+		console.log('player ' + client.playerid);
 	});
 
-	socket.on('clientid', function(data) {
-		clientid = data;
-		console.log('client ' + clientid);
+	client.socket.on('clientid', function(data) {
+		client.clientid = data;
+		console.log('client ' + client.clientid);
 	});
 
-	socket.on('joinstatus', function(data) {
-		var id = data.gameId;
-	
+	client.socket.on('joinstatus', function(data) {
 		if (data.succeed) {
-			console.log("Attempt to join game " + id + " succeeded");
+			console.log("Attempt to join game " + data.gameId + " succeeded");
 
-			switchScreen(screens.GAME);
+			client.gameid = data.gameId;
+
+			var data = { toScreen: screens.GAME }
+
+			var e = new CustomEvent( "switch-screen", { detail: data } );
+
+			//var e = new CustomEvent( "switch-screen", { "detail": { toScreen: screens.GAME } } );
+			document.dispatchEvent( e );
 		} else {
-			console.log("Attempt to join game " + id + " failed");
+			console.log("Attempt to join game " + data.gameId + " failed");
 			console.log("Reason: " + data.reason);
 		}
 	});
 
-	socket.on('currentRoom', function(data) {
-		if ( scrollBox != null ) {
-			if (scrollBox.getCurrentRoom() == null) scrollBox.setCurrentRoom( new Room(new Vec2(0, 0), 0, 0) );
-			scrollBox.grabCurrentRoom(data);
+	client.socket.on('currentRoom', function(data) {
+		if ( client.scrollBox != null ) {
+			if ( client.scrollBox.getCurrentRoom() == null) client.scrollBox.setCurrentRoom( new Room(new Vec2(0, 0), 0, 0) );
+			client.scrollBox.grabCurrentRoom( data );
 		}
 	});
 
-	socket.on('player', function(data) {
+	client.socket.on('player', function(data) {
 		var found = false;
 		
-		for (p in players) {
-			if (players[p].id == data.id) {
+		for (p in client.players ) {
+			if ( client.players[p].id == data.id ) {
 				found = true;
-				players[p].setValues(data);
+				client.players[p].setValues(data);
 			}
 		}
-		if (!found) {
-			players.push( new ClientMan( new Vec2(0, 0), data.side, data.team ) );
-			players[players.length - 1].clientid = data.clientid;
-			players[players.length - 1].id = data.id;
-			players[players.length - 1].setValues(data);
+		if ( !found ) {
+			var len = client.players.length - 1;
+
+			var newPlayer = new ClientMan( new Vec2(0, 0), data.side, data.team );
+
+			newPlayer.clientid = data.clientid;
+			newPlayer.id = data.id;
+			newPlayer.setValues( data );
+
+			client.players.push( newPlayer );
 		}
 		
 		//console.log(data);
 	});
 
-	socket.on('kill', function(data) {
-		for (p in players) {
-			if (players[p].id == data) players.splice(p, 1);
+	client.socket.on('kill', function(data) {
+		for (p in client.players) {
+			if ( client.players[p].id == data ) client.players.splice(p, 1);
 		}
 	});
 
-	socket.on('zone', function(data) {
-		zones.push(new ClientZone(new Vec2(0, 0), type.ball));
-		zones[zones.length - 1].grab(data);
+	client.socket.on('zone', function(data) {
+		var newZone = new ClientZone(new Vec2(0, 0), entityType.ball);
+
+		newZone.grab(data);
+		newZone.updateSides();
 		
-		zones[zones.length - 1].updateSides();
-		
-		if ( data.type.name == type.bounds.name ) {
-			bounds = zones[zones.length - 1];
+		if ( data.type.name == entityType.bounds.name ) {
+			bounds = newZone;
 		}
+
+		client.zones.push( newZone );
 		
 		console.log(data);
 	});
 
-	socket.on('team', function(data) {
+	client.socket.on('team', function(data) {
 		console.log( "Team " + data );
 
 		switch (data.side) {
 			case 'left':
-				leftTeam = new Team(data.nation, data.side);
+				client.leftTeam = new Team(data.nation, data.side);
 				break;
 				
 			case 'right':
-				rightTeam = new Team(data.nation, data.side);
+				client.rightTeam = new Team(data.nation, data.side);
 				break;
 		}	
 	});
 
-	socket.on('ball', function(data) {
-		if (ball == null) ball = new ClientBall(new Vec2(0, 0));
-		ball.grab(data);
+	client.socket.on('ball', function(data) {
+		if (client.ball == null) client.ball = new ClientBall(new Vec2(0, 0));
+
+		client.ball.grab(data);
 	});
 
 	/*
@@ -194,213 +239,133 @@ $(document).ready(function() {
 	 * event - some event
 	 * 
 	 */
-	socket.on('gameData', function(data) {
-		leftScore = data.leftScore;
-		rightScore = data.rightScore;
-		time = data.time;
-		gameStopped = data.stopped;
-		gameEvent = data.event;
+	client.socket.on('gameData', function(data) {
+		client.leftScore = data.leftScore;
+		client.rightScore = data.rightScore;
+		client.time = data.time;
+		client.gameStopped = data.stopped;
+		client.gameEvent = data.event;
 
-		if ( overlay == null && gameEvent != null && gameEvent.type == Event.prototype.TYPE.GOAL ) {
-			overlay = new anim1( "GOAL", 'red', scrollBox );
+		if ( client.overlay == null && client.gameEvent != null && client.gameEvent.type == Event.prototype.TYPE.GOAL ) {
+			client.overlay = new anim1( "GOAL", 'red', client.scrollBox );
 		}
 
-		if ( overlay == null && gameEvent != null && gameEvent.type == Event.prototype.TYPE.GOALKICK ) {
-			overlay = new anim2( "GOAL KICK", 'blue', scrollBox );
+		if ( client.overlay == null && client.gameEvent != null && client.gameEvent.type == Event.prototype.TYPE.GOALKICK ) {
+			client.overlay = new anim2( "GOAL KICK", 'blue', client.scrollBox );
 		}
-		if ( overlay != null && !gameStopped ) {
-			overlay.complete();
+		if ( client.overlay != null && !client.gameStopped ) {
+			client.overlay.complete();
 		}
 		
-		if ( overlay == null && gameEvent != null && gameEvent.type == Event.prototype.TYPE.ENDOFGAME ) {
-			if ( leftScore == rightScore ) {
-				overlay = new anim1( "DRAW", 'black', scrollBox );
+		if ( client.overlay == null && client.gameEvent != null && client.gameEvent.type == Event.prototype.TYPE.ENDOFGAME ) {
+			if ( client.leftScore == client.rightScore ) {
+				client.overlay = new anim1( "DRAW", 'black', client.scrollBox );
 			} else {
 				var winner;
 				
-				if ( leftScore > rightScore ) winner = 'left';
+				if ( client.leftScore > client.rightScore ) winner = 'left';
 				else winner = 'right';
 					
-				if ( clientPlayer.side == winner ) overlay = new anim1( "WIN", 'black', scrollBox );
-				else overlay = new anim1( "LOSE", 'black', scrollBox );
+				if ( client.clientPlayer.side == winner ) client.overlay = new anim1( "WIN", 'black', client.scrollBox );
+				else client.overlay = new anim1( "LOSE", 'black', client.scrollBox );
 			}
 		}
 	});
 	
-	socket.on('eventComplete', function(data) {
+	client.socket.on('eventComplete', function(data) {
 		console.log( '/eventComplete/ ' + data.type );
 		
-		if ( overlay != null ) overlay.complete();
+		if ( client.overlay != null ) client.overlay.complete();
 		
-		if ( data.type == Event.prototype.TYPE.ENDOFGAME ) leaveGame();
+		if ( data.type == Event.prototype.TYPE.ENDOFGAME ) client.leaveGame();
 	});
 
-	socket.on('list', function(data) {
+	client.socket.on('list', function(data) {
 		var found;
 		
-		menu.clearGameList();
+		client.menu.clearGameList();
 
 		for ( d in data ) {
-			menu.addGame( data[d] );		
+			client.menu.addGame( data[d] );		
 		}
 			
-		menu.refresh( scrollBox );
+		client.menu.refresh( client.scrollBox );
 	});		
 
-	socket.emit('ready', null);
+	client.socket.emit('ready', null);
 
-	socket.emit('list', null);
+	client.socket.emit('list', null);
 
-	socket.on('ready', function(data) {
-		updateInterval = setInterval(update, 20);
+	client.socket.on('ready', function(data) {
+		client.updateInterval = setInterval(clientUpdate, 60);
 	});
 
-	socket.on('marco', function(data) {
-		socket.emit('polo', null);
-	
-		sendClientPathPackets();	
+	client.socket.on('marco', function(data) {
+		client.socket.emit('polo', null);
 	});
 });	
 
-mousedown = false;
-
-var mouseMoveHandler = function(event) {
-	if (event.pageX || event.pageY) { 
-		mousePos.x = event.pageX;
-		mousePos.y = event.pageY;
-	} else { // Not all browsers use pageX/Y
-		mousePos.x = event.clientX + document.body.scrollLeft; 
-		mousePos.y = event.clientY + document.body.scrollTop; 
-	} 
-
-	mousePos.x -= scrollBox.canvas.offsetLeft;
-	mousePos.y -= scrollBox.canvas.offsetTop;
-}
-
-function menuMouseHit() {
-	menu.onMouseHit();
-}
-
-document.addEventListener("juego-mouse-update", menuMouseHit);
-
 // Update the packet containing the player's keystroke information
-var prepareKeyPacket = function() {
-	keys.left = keyboardState[KEY.LEFT];
-	keys.right = keyboardState[KEY.RIGHT];
-	keys.up = keyboardState[KEY.UP];
-	keys.down = keyboardState[KEY.DOWN];
-	keys.z = keyboardState[KEY.Z];
-	keys.x = keyboardState[KEY.X];
-	keys.c = keyboardState[KEY.C];
-}
-
-/* 
- * routeAround
- * 
- * find a path around some obstacle
- * the 'path' consists of the midpoints of the open areas left and right of the obstacle
- * 
- */
-var routeAround = function( point, approach ) {
-	if (clientPlayer == null) return;
-	
-	var box = clientPlayer.sightLine;
-
-	context.fillStyle = 'orange';
-	
-	if ( playerTree.overlaps( box ) ) {
-		context.fillStyle = 'red';
-	}
-	
-	if ( box.containsPoint( clientPlayer.pos ) ) {
-		context.fillStyle = 'purple';
-	}	
-
-	context.lineWidth = 1;
-	context.strokeStyle = 'blue';
-	
-	var convert = function( point ) {
-		var p = point.minus( box.pos );
-		p.rotate( box.angle );
-		p.add( box.pos );
-		
-		return p;		
-	}
-	
-	context.save();
-		context.beginPath();
-		
-		context.moveTo( box.left, box.top );
-		context.lineTo( box.right, box.top );
-		context.lineTo( box.right, box.bottom );
-		context.lineTo( box.left, box.bottom );
-		context.closePath();
-		
-		for ( p in players ) {
-			var loc = convert( players[p].center );
-			
-			context.stroke();
-			context.fillStyle = 'blue';
-			context.fillRect( loc.x - 5, loc.y - 5, 10, 10 );
-		}
-	context.restore();
-
-	context.fillStyle = 'orange';
-	context.fillRect( clientPlayer.pos.x, clientPlayer.pos.y, 20, 20 );
-}
-	
-var debugDraw = function( context ) {
-	if ( keyHeld( KEY.G ) ) { 
-		for (p in players) {
-			var player = players[p];
-			
-			if ( player.obstructed ) context.fillStyle = 'black';
-			else context.fillStyle = 'white';
-			
-			context.globalAlpha = 0.6;
-			player.sightLine.drawRect( context );
-			if ( player.leftOption != null ) {
-				player.leftOption.drawRect( context );
-			}
-			
-			if ( player.rightOption != null ) {
-				player.rightOption.drawRect( context );
-			}
-			
-			context.globalAlpha = 1.0;			
-		}
-		
-		if ( clientPlayer != null && clientPlayer.obstructed && clientPlayer.occluder != null ) {
-			context.fillStyle = 'purple';
-			context.fillRect( clientPlayer.occluder.center.x, clientPlayer.occluder.center.y, 20, 20 );
-			
-			if ( clientPlayer.leftOccluder != null ) {
-				context.fillRect( clientPlayer.leftOccluder.center.x, clientPlayer.leftOccluder.center.y, 20, 20 );	
-			}
-			if ( clientPlayer.rightOccluder != null ) {
-				context.fillRect( clientPlayer.rightOccluder.center.x, clientPlayer.rightOccluderxz.center.y, 20, 20 );	
-			}			
-		}		
-	}
-	
-	if ( playerTree != null ) playerTree.draw( context, function ( node ) { return node.tested || !(keyHeld(KEY.F) || keyHeld( KEY.G ) ); } );
+Client.prototype.prepareKeyPacket = function() {
+	this.keys.left = keyboard.keyState( keyboard.KEY.LEFT );
+	this.keys.right = keyboard.keyState( keyboard.KEY.RIGHT );
+	this.keys.up = keyboard.keyState( keyboard.KEY.UP );
+	this.keys.down = keyboard.keyState( keyboard.KEY.DOWN );
+	this.keys.z = keyboard.keyState( keyboard.KEY.Z );
+	this.keys.x = keyboard.keyState( keyboard.KEY.X );
+	this.keys.c = keyboard.keyState( keyboard.KEY.C );
 }
 
 // Reacts to switch screen event
+Client.prototype.registerHandlers = function() {
+	var _this = this;
 
-document.addEventListener( "switch-screen", function(e) {
-	if (e.toScreen == screens.LIST) socket.emit('list', null);
-}, true);
+	document.addEventListener( "switch-screen", function( e ) {
+		if (e.detail.toScreen == screens.LIST) this.socket.emit('list', null);
+	}, true);
 
-var sendClientPathPackets = function() {
-	for ( p in players ) {
-		var player = players[p];
-		
-		socket.emit('playerpath', { id: player.id, pos: player.interDestPos });
-	}
+	document.addEventListener( "attempt-join-game", function( e ) {
+		clearInterval( _this.updateInterval );
+
+		_this.players = [];
+		_this.zones = [];
+
+		_this.socket.emit( "join", e.data.id );
+	}, true);
+
+	document.addEventListener( "attempt-add-game", function( e ) {
+		clearInterval( _this.updateInterval );
+		_this.updateInterval = setInterval( clientUpdate, 60 );	
+
+		var data = {team1: e.team1Nation, team2: e.team2Nation};
+
+		console.log( 'Add Game: ' + data.team1 + ' v ' + data.team2 );
+		_this.socket.emit( 'addgame', data );
+
+		var e = new Event( "switch-screen" );
+		e.toScreen = screens.LIST;
+		document.dispatchEvent( e );		
+	}, true);
+
+	document.addEventListener( "leave-game", function( e ) {
+		clearInterval( _this.updateInterval );
+		_this.updateInterval = setInterval( clientUpdate, 60 );	
+
+		_this.socket.emit( 'leave', null );
+
+		var e = new Event( "switch-screen" );
+		e.toScreen = screens.LIST;
+		document.dispatchEvent( e );		
+	}, true);
 }
 
-var attemptToJoinGame = function(id) {
+Client.prototype.leaveGame = function() {
+	var e = new Event( "leave-game" );
+	document.dispatchEvent( e );
+}
+
+/*
+Client.prototype.attemptToJoinGame = function(id) {
 	clearInterval(updateInterval);
 
 	gameid = id;
@@ -408,9 +373,9 @@ var attemptToJoinGame = function(id) {
 	zones = [];
 
 	socket.emit('join', gameid);
-}
-
-var attemptToAddGame = function(team1Nation, team2Nation) {
+}*/
+/*
+Client.prototype.attemptToAddGame = function(team1Nation, team2Nation) {
 	clearInterval(updateInterval);
 	setInterval(update, 60);	
 
@@ -419,76 +384,75 @@ var attemptToAddGame = function(team1Nation, team2Nation) {
 	console.log('Add Game: ' + data.team1 + ' v ' + data.team2);
 	socket.emit('addgame', data);
 
-	switchScreen(screens.LIST);
-}
-
-var leaveGame = function() {
+	var e = new Event( "switch-screen" );
+	e.toScreen = screens.LIST;
+	document.dispatchEvent( e );
+}*/
+/*
+Client.prototype.leaveGame = function() {
 	clearInterval(updateInterval);
 	setInterval(update, 60);
 
 	socket.emit('leave', null);
 
-	switchScreen( screens.LIST );
-}	
+	var e = new Event( "switch-screen" );
+	e.toScreen = screens.LIST;
+	document.dispatchEvent( e );
+}	*/
 
-var updateInterval;
+var clientUpdate = function() {
+	client.update();
+}
 
-var update = function() {
-	frames++;
+Client.prototype.update = function() {
+	this.frames++;
 	
-	if ( overlay != null ) socket.emit( 'waiting', null );
+	if ( this.overlay != null ) this.socket.emit( 'waiting', null );
 
-	menu.update( scrollBox );
+	this.updateBall();
 
-	updateBall();
+	//if( this.clientPlayer != null ) {
+	//	this.clientPlayer.destPos = mousePos.plus( new Vec2( this.scrollBox.hScroll, this.scrollBox.vScroll ) );
+	//}
 
-	if( clientPlayer != null ) clientPlayer.destPos = mousePos.plus( new Vec2( scrollBox.hScroll, scrollBox.vScroll ) );
-	updatePlayers();
-	//updatePlayerTree( players );
-	//testPlayersAgainstTree( players, playerTree );
+	this.updatePlayers();
 
-	render();
+	this.render();
 	
-	mouse.updateState( scrollBox.canvas );
+	mouse.updateState( this.scrollBox.canvas );
 }
 
-var getGameStatusString = function() {
-	return leftTeam.nation.name + ' ' + leftScore + ' ' +
-			text.pad0(Math.floor(time / 60).toString(), 2) + ":" + text.pad0((time % 60).toString(), 2) + ' ' + 
-			rightTeam.nation.name + ' ' + rightScore;
+Client.prototype.getGameStatusString = function() {
+	return 	this.leftTeam.nation.name + ' ' + this.leftScore + ' ' +
+			text.pad0(Math.floor(this.time / 60).toString(), 2) + ":" + text.pad0((this.time % 60).toString(), 2) + ' ' + 
+			this.rightTeam.nation.name + ' ' + this.rightScore;
 }
 
-var updateBall = function() {
-	if ( ball != null ) ball.updateSides();	
+Client.prototype.updateBall = function() {
+	if ( this.ball != null ) this.ball.updateSides();	
 }
 
-var updatePlayers = function() {
-	for ( p in players ) {
-		var player = players[p];
+Client.prototype.updatePlayers = function() {
+	for ( p in this.players ) {
+		var player = this.players[p];
 		
 		player.updateSides();
-		player.updateSightLine();
 	}
 }
 
-var updatePlayerTree = function ( players ) {
-	var compX = function( playerA, playerB ) {
-		return ( playerA.pos.x - playerB.pos.x );
-	}
-	
-	var compY = function( playerA, playerB ) {
-		return ( playerA.pos.y - playerB.pos.y );
-	}
-	
-	playerTree = new KDTree( players, 2, [ compX, compY ] );	
-}
-
-var testPlayersAgainstTree = function( players, tree ) {
-	for ( p in players ) {
-		var player = players[p];		
-		
-		if ( tree != null ) player.testAgainstTree( tree, player == clientPlayer, bounds );
-	}
+var strokeRectangle = function( posX, posY, width, height, radius ) {
+	context.save();
+		context.translate( posX, posY );
+		context.moveTo( 0, 0 );
+		context.lineTo( width - radius, 0 );
+		context.arcTo( width, 0, width, radius, radius );
+		context.lineTo( width, height - radius );
+		context.arcTo( width, height, width - radius, height, radius );
+		context.lineTo( radius, height );
+		context.arcTo( 0, height, 0, height - radius, radius );
+		context.lineTo( 0, radius );
+		context.arcTo( 0, 0, radius, 0, radius );
+	context.restore();
 }
 
 var drawKey = function(name, posX, posY, width, height) {
@@ -510,68 +474,55 @@ var drawKey = function(name, posX, posY, width, height) {
 	context.fillText( name, posX + width / 2, posY + height - radius * 2, width - radius * 4 );
 }
 
-var strokeRectangle = function( posX, posY, width, height, radius ) {
-	context.save();
-		context.translate( posX, posY );
-		context.moveTo( 0, 0 );
-		context.lineTo( width - radius, 0 );
-		context.arcTo( width, 0, width, radius, radius );
-		context.lineTo( width, height - radius );
-		context.arcTo( width, height, width - radius, height, radius );
-		context.lineTo( radius, height );
-		context.arcTo( 0, height, 0, height - radius, radius );
-		context.lineTo( 0, radius );
-		context.arcTo( 0, 0, radius, 0, radius );
-	context.restore();
-}
+Client.prototype.render = function() {
+	this.scrollBox.clearCanvas();
 
-var render = function() {
-	scrollBox.clearCanvas();
+	context = this.scrollBox.getContext();
 
-	context = scrollBox.getContext();
-
-	switch (menu.currentScreen) {
+	switch (this.menu.currentScreen) {
 	case screens.TITLE:
 		
 		break;
 	case screens.LIST:
-		menu.draw( context );
+
 		break;
 	case screens.NEWGAMETEAM1:
 	case screens.NEWGAMETEAM2:	
-		menu.draw( context );
+
 		break;
 	case screens.HOWTO:
 
 		break;
 	case screens.GAME:
-		if ( inDebugMode ) socket.emit('debuginput', keyboardState);
-		else socket.emit('input', keys);
-		prepareKeyPacket();
-		keyboardStateUpdater();
+		if ( this.inDebugMode ) this.socket.emit('debuginput', keyboard.KEY);
+		else this.socket.emit('input', this.keys);
 
-		for (p in players) {
-			if (players[p].id == playerid && playerid > 0) clientPlayer = players[p];
+		console.log( this.keys );	
+
+		this.prepareKeyPacket();
+		keyboard.updateState();
+
+		for (p in this.players) {
+			if ( this.players[p].id == this.playerid && this.playerid > 0 ) this.clientPlayer = this.players[p];
 		}
 
-		scrollBox.calcValues();
+		this.scrollBox.calcValues();
 
 		var target;
 	
-		if (clientPlayer != null) target = clientPlayer.pos;
-		else if ( ball != null) target = ball.pos;
+		if ( this.clientPlayer != null ) target = this.clientPlayer.pos;
+		else if ( this.ball != null ) target = this.ball.pos;
 		else target = new Vec2(0, 0);
 	
-		scrollBox.centerOn( target.x, target.y );
+		this.scrollBox.centerOn( target.x, target.y );
 
 		context.save();
-			context.translate( -scrollBox.hScroll, -scrollBox.vScroll );
+			context.translate( -this.scrollBox.hScroll, -this.scrollBox.vScroll );
 		
-			drawField(context);
+			this.drawField(context);
 			
 			//routeAround();
 			
-			if ( keyHeld(KEY.D) ) debugDraw( context );
 		context.restore();
 
 		// HUD
@@ -579,13 +530,13 @@ var render = function() {
 		var border = 20;
 		var staminaBarThickness = 20;
 		var cornerRadius = 4;
-		var staminaBarLength = scrollBox.viewportW - border * 2;
-		var currentStamina = clientPlayer.stamina / 100 * staminaBarLength;
+		var staminaBarLength = this.scrollBox.viewportW - border * 2;
+		var currentStamina = this.clientPlayer.stamina / 100 * staminaBarLength;
 
 		// Stamina bar
-		if ( clientPlayer != null ) {
+		if ( this.clientPlayer != null ) {
 			context.save();
-				context.translate( border, scrollBox.viewportH - border * 4 - staminaBarThickness );
+				context.translate( border, this.scrollBox.viewportH - border * 4 - staminaBarThickness );
 				
 				// Stamina bar outline, with rounded corners (this is what changes shape with the player's stamina)
 				context.beginPath();
@@ -608,12 +559,12 @@ var render = function() {
 		// Arrows - move Z - kick X - punt C - run V - call for pass
 		
 		context.save();
-			context.translate( border, scrollBox.viewportH - border );
+			context.translate( border, this.scrollBox.viewportH - border );
 				
 			var smallKeySize = 20;
 			var largeKeySize = 40;	
 			var font = '50pt bold';
-			var interval = scrollBox.viewportW / 5;
+			var interval = this.scrollBox.viewportW / 5;
 			
 			var illustrateKey = function( name, text, posX, posY ) {
 				context.save();
@@ -644,51 +595,42 @@ var render = function() {
 			
 		context.restore();
 			
-		menu.draw( context );
 		break;
 	case screens.RESULT:
 
 		break;
 	}
 
-	if ( overlay != null ) {
-		overlay.loop();
-		if ( overlay.removeThis ) overlay = null;
+	if ( this.overlay != null ) {
+		this.overlay.loop();
+		if ( this.overlay.removeThis ) this.overlay = null;
 	}
 }
 
-var drawField = function( context ) {
-	for (z in zones) {
-		zones[z].draw(context);
+Client.prototype.drawField = function( context ) {
+	for (z in this.zones) {
+		this.zones[z].draw(context);
 	}
 
-	if ( clientPlayer != null ) {
+	if ( this.clientPlayer != null ) {
 		context.globalAlpha = 0.5;
 		context.fillStyle = 'green';
 		context.lineWidth = 20;
 		context.beginPath();
-		context.arc(clientPlayer.center.x, clientPlayer.center.y, 50, 0, Math.PI * 2, false);
+		context.arc( this.clientPlayer.center.x, this.clientPlayer.center.y, 50, 0, Math.PI * 2, false);
 		context.fill();
 		context.globalAlpha = 1.0;
 	}
-	for (p in players) {
-		players[p].draw(context);
+	for (p in this.players) {
+		this.players[p].draw( context );
 	}
-	if (ball != null) ball.draw(context);
+	if (this.ball != null) this.ball.draw( context );
 	
-	for (z in zones) {
-		zones[z].drawOverlay(context);
+	for (z in this.zones) {
+		this.zones[z].drawOverlay( context );
 	}
 }
 
-var fps = 0;
-var frames = 0;
-
-var timer = function() {
-	fps = frames;
-	frames = 0;
-}
-
-setInterval( timer, 1000 );
+return client;
 
 });

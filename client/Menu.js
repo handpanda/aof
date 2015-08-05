@@ -1,4 +1,4 @@
-define( ["jquery", "screens"], function($, screens) {
+define( ["jquery", "screens", "nations" ], function($, screens, nations) {
 
 var menudims = {
 	list: { name: 'list', xPos: 0, yPos: 0, width: 500},
@@ -7,7 +7,6 @@ var menudims = {
 }
 
 var Menu = function() {
-	this.elementList = [];
 	this.gameList = [];
 	this.vScroll = 0;
 	this.interButtonSpacing = 6;
@@ -24,6 +23,8 @@ var Menu = function() {
 	this.buttonStyle.height = this.buttonStyle.fontSize + this.buttonStyle.cornerRadius * 2;
 	
 	this.y = 0;
+
+	this.registerHandlers();
 }	
 
 Menu.prototype.clearGameList = function() {
@@ -45,37 +46,24 @@ Menu.prototype.addGame = function( game ) {
 	}
 }
 
-Menu.prototype.update = function( scrollBox ) {
-	for (l in this.elementList) {
-		var elem = this.elementList[l];
-
-		elem.update( scrollBox );
-	}
-}
-
 Menu.prototype.switchScreen = function( toScreen ) {
-	this.currentScreen = toScreen;
-
-	this.refresh();
-
 	var e = new Event( "switch-screen" );
-	e.toScreen = screens.LIST;
+	e.detail = { toScreen: toScreen };
 
 	document.dispatchEvent(e);
 }
 
-Menu.prototype.onMouseHit = function( ) {
-	for (l in this.elementList) {
-		var elem = this.elementList[l];
+Menu.prototype.registerHandlers = function() {
+	var _this = this;
 
-		elem.onMouseHit();
-	}	
+	document.addEventListener( "switch-screen", function( e ) {
+		_this.currentScreen = e.detail.toScreen;
+
+		_this.refresh();
+	});
 }
 
-
-
 Menu.prototype.refresh = function() {
-	this.elementList = [];
 	this.y = menudims.list.yPos + this.vScroll;
 	
 	var textbox;
@@ -85,6 +73,9 @@ Menu.prototype.refresh = function() {
 	
 	var team1image = document.getElementById("team1image");
 	var team2image = document.getElementById("team2image");
+
+	var team1Nation = nations[0];
+	var team2Nation = nations[0];
 
 	switch (this.currentScreen) {
 		case screens.TITLE:
@@ -120,8 +111,11 @@ Menu.prototype.refresh = function() {
 
 				joinGameButton.setAttribute("class", "row-fluid buffer" );
 				joinGameButton.setAttribute("style", "background-color:purple;");
+				
 				joinGameButton.onclick = function() {
-					attemptToJoinGame( game.id );
+					var e = new Event( "attempt-join-game" );
+					e.data = { id: game.id };
+					document.dispatchEvent( e );
 				}
 
 				joinGameButton.innerHTML = this.gameList[g].team1Nation.name + " vs " + this.gameList[g].team2Nation.name;
@@ -195,8 +189,14 @@ Menu.prototype.refresh = function() {
 				div.setAttribute("style", "background-color:purple");
 
 				div.onclick = function() {
-					attemptToAddGame(team1Nation, team2Nation);	
-					this.switchScreen(screens.LIST);
+					var e = new Event( "attempt-add-game" );
+					e.team1Nation = team1Nation;
+					e.team2Nation = team2Nation;
+					document.dispatchEvent( e );
+
+					e = new Event( "switch-screen" );
+					e.toScreen = screens.LIST;
+					document.dispatchEvent( e );
 				};
 
 				div.innerHTML = "Start";
@@ -213,7 +213,8 @@ Menu.prototype.refresh = function() {
 				div.setAttribute("style", "background-color:purple");
 
 				div.onclick = function() {
-					leaveGame();
+					var e = new Event( "leave-game" );
+					document.dispatchEvent( e );
 				};
 
 				div.innerHTML = "Back to Lobby";
@@ -225,18 +226,6 @@ Menu.prototype.refresh = function() {
 
 Menu.prototype.setStatusString = function( string ) {
 	this.statusString = string;
-}
-
-Menu.prototype.draw = function( context ) {
-	context.font = this.buttonStyle.font;
-	
-	context.save();
-	
-	for (l in this.elementList) {
-		this.elementList[l].draw(context);
-	}
-	
-	context.restore();
 }
 
 return Menu;

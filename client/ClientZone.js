@@ -1,4 +1,20 @@
-define (["client/ClientEntity", "juego/image"], function ( ClientEntity, image ) {
+define (["juego/image",
+	
+		 "type",
+		 "dims",
+
+		 "client/ClientEntity",
+		 
+		 ], function ( 
+
+		 image,
+
+		 entityType,
+		 dims,
+
+		 ClientEntity
+
+		 ) {
 
 var grassImg = new image.RegularImage( "img/grass.png" );
 
@@ -27,7 +43,7 @@ ClientZone.prototype.draw = function( context ) {
 			if (this.side == 'right') context.fillStyle = 'red';				
 
 			switch (this.type.name) {
-				case type.field.name:
+				case entityType.field.name:
 					context.fillRect(0, 0, this.width, this.height);
 					for ( var x = 0; x < this.width; x += grassImg.image.width ) {
 						for ( var y = 0; y < this.height; y += grassImg.image.height ) {
@@ -56,7 +72,7 @@ ClientZone.prototype.draw = function( context ) {
 					context.arc(dims.fieldLength / 2, dims.fieldWidth / 2, dims.centerRadius, 0, 2 * Math.PI, false);
 					context.stroke();	
 					break;
-				case type.goalieBox.name:
+				case entityType.goalieBox.name:
 					context.strokeStyle = 'white';
 					context.lineWidth = dims.postWidth;
 					switch (this.side) {
@@ -79,7 +95,7 @@ ClientZone.prototype.draw = function( context ) {
 					}
 
 					break;
-				case type.goal.name:
+				case entityType.goal.name:
 					//context.fillRect(0, 0, this.width, this.height);
 					
 					break;
@@ -98,7 +114,7 @@ ClientZone.prototype.drawOverlay = function( context ) {
 
 			switch (this.type.name) {
 				
-				case type.goal.name:
+				case entityType.goal.name:
 					context.strokeStyle = "white";
 					context.lineWidth = dims.postWidth;
 					context.strokeStyle = "white";

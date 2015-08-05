@@ -1,9 +1,27 @@
-define (["client/ClientEntity", "juego/image", "nations"], function ( ClientEntity, image, nations ) {
+define ([	
+			"juego/image", 
 
+			"nations", 
+			"type",
+			"Act",
+
+			"client/ClientEntity", 
+		], function ( 
+			image, 
+
+			nations, 
+			entityType,
+			ACT,
+
+			ClientEntity 
+		) {
+
+// Bring image stuff into ClientMan namespace
 var Palette = image.Palette;
 var RegularImage = image.RegularImage;
 var Animation = image.Animation;
 var AnimatedImage = image.AnimatedImage;
+var AnimationRunner = image.AnimationRunner;
 var Color = image.Color;
 
 var noPalette = new image.Palette( [], [] );
@@ -99,12 +117,10 @@ var manAnim = {
 	},
 }
 
-// It was a mistake
-
 var ClientMan = function(pos, side, team) {
-	ClientEntity.call( this, pos, type.player, side );
-	
-	this.hasBall = 	false;
+	ClientEntity.call( this, pos, entityType.player, side );
+
+	this.updateSides();
 	
 	this.pastPositions = [];
 
@@ -112,9 +128,6 @@ var ClientMan = function(pos, side, team) {
 	this.sprinting = false;
 	
 	this.destPos = new Vec2( 0, 0 );
-	
-	this.sightLine = new ClientEntity( new Vec2( 0, 0 ), type.none, '' );
-	this.obstructed = false;
 	
 	this.occluder = null;
 	this.leftOption = null;
@@ -137,61 +150,6 @@ var ClientMan = function(pos, side, team) {
 
 ClientMan.prototype = new ClientEntity();
 ClientMan.prototype.constructor = ClientMan;
-
-ClientMan.prototype.updateSightLine = function() {
-	this.sightLine = new SightLine( this.center, this.destPos );
-	this.obstructed = false;
-}
-
-ClientMan.prototype.testAgainstTree = function( playerTree, mark, bounds ) {
-	this.occluder = null;
-	this.leftOption = null;
-	this.rightOption = null;
-	this.leftOccluder = null;
-	this.rightOccluder = null;
-	
-	this.obstructed = playerTree.isContainedBy( this.sightLine, mark );
-	
-	// We are occluded and have to go a different direction
-	if ( this.obstructed && playerTree.occluder != null && bounds != null ) {
-		this.occluder = playerTree.occluder;
-		
-		var v = this.sightLine.toPos.minus( this.sightLine.fromPos ).swap().normalize().scale(300);
-		v.y *= -1
-		var v2 = v.copy().flip();
-		
-		this.leftOption = new SightLine( this.occluder.center, bounds.clip( this.occluder.center.plus( v ) ) );
-		this.rightOption = new SightLine( this.occluder.center, bounds.clip( this.occluder.center.plus( v2 ) ) );
-		
-		var leftLen = -1;
-		
-		if ( playerTree.isContainedBy( this.leftOption, false ) && playerTree.occluder != null ) {
-			this.leftOccluder = playerTree.occluder;
-			leftLen = this.occluder.center.distanceTo( this.leftOccluder.center );
-			this.interDestPos = this.occluder.center.plus( this.leftOccluder.center ).scale( 0.5 );
-		} else {
-			leftLen = this.occluder.center.distanceTo( this.leftOption.toPos );
-			this.interDestPos = this.occluder.center.plus( this.leftOption.toPos ).scale( 0.5 ); 
-		}
-		
-		if ( playerTree.isContainedBy( this.rightOption, false ) && playerTree.occluder != null ) {
-			this.rightOccluder = playerTree.occluder;
-			if ( leftLen == -1 || this.occluder.center.distanceTo( this.rightOccluder.center ) < leftLen ) {
-				this.interDestPos = this.occluder.center.plus( this.rightOccluder.center ).scale( 0.5 );	
-			}
-		} else {
-			if ( leftLen == -1 || this.occluder.center.distanceTo( this.rightOption.toPos ) < leftLen ) {
-				this.interDestPos = this.occluder.center.plus( this.rightOption.toPos ).scale( 0.5 ); 				
-			}
-		}
-	} else {
-		this.interDestPos = null;
-	}
-}
-
-ClientMan.prototype.testAgainstMan = function( man ) {
-	this.obstructed = this.sightLine.containsPoint( man.center );
-}
 
 ClientMan.prototype.draw = function( context ) {
 	this.pastPositions.push( this.pos );
@@ -243,19 +201,19 @@ ClientMan.prototype.draw = function( context ) {
 	context.save();
 		context.translate(this.center.x, this.center.y);			
 				
-				// Debug Text
-				if ( inDebugMode ) {
-					
-					// Client ID
-					context.font = '24px serif';
-					context.fillStyle = 'white';
-					context.fillText(this.clientid, 0, 0);
-					
-					// Latency
-					context.font = '24px serif';
-					context.fillStyle = 'orange';
-					context.fillText(this.latency + '/' + this.msecsSinceLastPing, 0, 24);
-				}
+			// Debug Text
+			//if ( inDebugMode ) {
+				
+				// Client ID
+				context.font = '24px serif';
+				context.fillStyle = 'white';
+				context.fillText(this.clientid, 0, 0);
+				
+				// Latency
+				context.font = '24px serif';
+				context.fillStyle = 'orange';
+				context.fillText(this.latency + '/' + this.msecsSinceLastPing, 0, 24);
+			//}
 	context.restore();
 }
 

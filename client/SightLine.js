@@ -1,4 +1,4 @@
-define (["client/ClientEntity"], function ( ClientEntity ) {
+/*define (["client/ClientEntity"], function ( ClientEntity ) {
 
 var SightLine = function( fromPos, toPos ) {
 	ClientEntity.call( this, new Vec2( 0, 0 ), type.none, '' );
@@ -38,4 +38,4 @@ var SightLine = function( fromPos, toPos ) {
 SightLine.prototype = new ClientEntity();
 SightLine.prototype.constructor = SightLine;
 
-});
+});*/

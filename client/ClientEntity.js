@@ -3,29 +3,15 @@
 	ClientEntity.js - client-side entities 
 	
 */
-define( ["juego/Vec2", "dims", "Act"], function( Vec2, dims, ACT ) {
-
-// Specifications for Entity
-var type = {
-	player    : { name: 'player', width: 40  , height: 40, color: 'white' },
-	ball      : { name: 'ball', width: 25  , height: 25, color: 'white' },
-	field     : { name: 'field', width: dims.fieldLength, height: dims.fieldWidth, color: 'orange' },
-	sideline  : { name: 'sideline', width: dims.fieldLength - dims.sidelineWidth / 2, height: dims.sidelineWidth, color: 'blue' },
-	backline  : { name: 'backline', width: dims.backlineWidth, height: dims.fieldWidth, color: 'red' },
-	goal      : { name: 'goal', width: dims.goalDepth , height: dims.goalWidth, color: 'yellow' },
-	goalieBox : { name: 'goalieBox', width: dims.goalieBoxDepth , height: dims.goalieBoxWidth, color: 'purple' },
-	goalSide  : { name: 'goalSide', width: dims.sidelineWidth, height: dims.postWidth },
-	goalBack  : { name: 'goalBack', width: dims.postWidth, height: dims.goalWidth },
-	bounds	  : { name: 'bounds', width: dims.fieldLength - dims.backlineWidth * 2, height: dims.fieldWidth - dims.sidelineWidth * 2, color: 'green' },
-	none 	  : { name: 'none', width: 0, height: 0, color: 'orange' },
-}
+define( ["juego/Vec2", "dims", "Act", "type"], function( Vec2, dims, ACT, entityType ) {
 
 /*
 	One of the Entity in the game - ball, player, field region
 */
 var ClientEntity = function(pos, objtype, side) {
-	this.type = type.ball;
+	this.type = entityType.ball;
 	if ( objtype !== undefined ) this.type = 	objtype;
+
 	this.pos = new Vec2( 0, 0 );
 	if ( pos !== undefined ) this.pos = 	pos;
 	this.vel = new Vec2( 0, 0 );
@@ -38,12 +24,14 @@ var ClientEntity = function(pos, objtype, side) {
 	this.msecsSinceLastPing = 0;
 	this.angle = 	0.0;
 	this.center =   new Vec2(this.pos.x + this.width / 2, this.pos.y + this.height / 2);
-	this.action  = 	ACT.STAND;
+	this.action = 	ACT.STAND;
 	this.side = 	side;
 	this.z = 0;
 	this.velZ = 0;
 	this.sprinting = false;
-	
+
+	console.log( "hello" );
+
 	this.updateSides();
 }
 
