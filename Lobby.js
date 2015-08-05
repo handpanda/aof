@@ -1,5 +1,6 @@
 var Game = require('./Game.js');
-var team = require('./Team.js');
+var Team = require('./Team.js');
+var nations = require('./nations.js');
 var discrete = require('./discrete.js');
 
 /*
@@ -19,7 +20,7 @@ Lobby.prototype.setDefaultPlayerCount = function( hPlayers, vPlayers ) {
 
 // Make new game between two specific teams
 Lobby.prototype.addGame = function(team1Nation, team2Nation) {
-	var game = new Game(new team.Team(team1Nation, 'left'), new team.Team(team2Nation, 'right'), []);
+	var game = new Game(new Team(team1Nation, 'left'), new Team(team2Nation, 'right'), []);
 	game.addAIPlayers( this.hPlayers, this.vPlayers );
 	
 	this.games.push( game );
@@ -31,9 +32,9 @@ Lobby.prototype.addGame = function(team1Nation, team2Nation) {
 // Make a new game between two random teams
 Lobby.prototype.addRandomGame = function() {
 	var leftTeamNation, rightTeamNation;
-	leftTeamNation = discrete.randElem(team.nations);
+	leftTeamNation = discrete.randElem(nations);
 	do {
-		rightTeamNation = discrete.randElem(team.nations);
+		rightTeamNation = discrete.randElem(nations);
 	} while (rightTeamNation == leftTeamNation);
 
 	this.addGame(leftTeamNation, rightTeamNation);		
