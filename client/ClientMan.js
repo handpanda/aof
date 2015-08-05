@@ -1,4 +1,4 @@
-define (["client/ClientEntity", "juego/image"], function ( ClientEntity, image ) {
+define (["client/ClientEntity", "juego/image", "nations"], function ( ClientEntity, image, nations ) {
 
 var Palette = image.Palette;
 var RegularImage = image.RegularImage;
@@ -123,9 +123,7 @@ var ClientMan = function(pos, side, team) {
 	this.rightOccluder = null;
 	this.interDestPos = null;
 
-	console.log( team )
-	console.log( nations[3] )
-	console.log( team == nations[3] );
+	console.log( team );
 
 	this.mainRunner = new AnimationRunner( this.posX, this.posY, false, false );
 	this.mainRunner.setLoopingAnim( manAnim.walkDown );
