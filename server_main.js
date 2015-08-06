@@ -62,11 +62,23 @@ var server = http.createServer(function(request, response) {
 			break;
 	}
 
-	response.writeHead(200, {
-		'Content-Type': contentType
+	var file = fs.readFile( filePath, function( err, data ) { 
+		if ( err ) {
+			console.log( "File not found: " + filePath );
+			throw err;
+		}
+
+		response.writeHead(200, {
+			'Content-Type': contentType
+		});
+
+		response.write( data );
+
+		response.end();
 	});
 
-	var rs = fs.createReadStream(filePath).pipe( response );
+	//var rs = fs.createReadStream(filePath).pipe( response );	
+
 }).listen(PORT_NO);
 
 var sio = io.listen(server, {log: 'false'});
@@ -79,8 +91,7 @@ var lobby = new Lobby();
 
 lobby.setDefaultPlayerCount( hPlayers, vPlayers );
 
-sio.sockets.on('connection', function(client) {
-	
+sio.sockets.on('connection', function( client ) {
 	console.log("New Client");
 
 	newClient = new AOFClient( client );
@@ -89,8 +100,8 @@ sio.sockets.on('connection', function(client) {
 	clientnum++;
 	
 	newClient.setLobby( lobby );
-	
-	console.log('Client joined from ' + client.handshake.address.address + ":" + client.handshake.address.port + " (" + client.ident + ")");
+
+	console.log('Client joined from ' + client.handshake.address );
 });
 
 var update = function() {
@@ -98,7 +109,6 @@ var update = function() {
 	// Add new games
 	if ( lobby.games.length == 0 ) {
 		lobby.addRandomGame();
-		
 	}
 
 	// Update games in progress
