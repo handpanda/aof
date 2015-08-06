@@ -5,6 +5,7 @@
 		<title>Age of Football</title>
 
 		<link href="./css/bootstrap.min.css" rel="stylesheet" type="text/css">
+		<link href="./css/menu.css" rel="stylesheet" type="text/css">
 
 		<script type="text/javascript" src="./require.js"></script>
 
@@ -27,14 +28,18 @@
 			    }
 			});
 
-			var client;
+			var clearInput = function( id ) {
+				console.log( "clearInput" );
+
+				id.value = "";
+			}
 
 			require(["client/client_main"], function( client_main ) {
-				client = client_main;
+				
 			});
 		</script>
 
-		<style = type="text/css">
+		<style type="text/css">
 			html {
 			  width:  100%;
 			  height: 100%;
@@ -111,7 +116,11 @@
 		</style>
 	</head>
 	<body>
-<div id="arena">
+
+	<div id="arena">
+		
+
+
 				<div id="menu" class="row-fluid">
 
 					<div id="team1data" class="span2">
