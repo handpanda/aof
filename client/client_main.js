@@ -20,7 +20,8 @@ define( [
 		"client/ClientZone",
 		"client/Menu",
 		"client/anim1",
-		"client/anim2"], function(
+		"client/anim2",
+		"client/sendEvent"], function(
 
 		$,
 		io,
@@ -40,7 +41,8 @@ define( [
 		ClientZone,
 		Menu,
 		anim1,
-		anim2) {
+		anim2,
+		sendEvent) {
 
 var Client = function() {
 
@@ -143,12 +145,7 @@ $(document).ready(function() {
 
 			client.gameid = data.gameId;
 
-			var data = { toScreen: screens.GAME }
-
-			var e = new CustomEvent( "switch-screen", { detail: data } );
-
-			//var e = new CustomEvent( "switch-screen", { "detail": { toScreen: screens.GAME } } );
-			document.dispatchEvent( e );
+			sendEvent( "switch-screen", { toScreen: screens.GAME } );
 		} else {
 			console.log("Attempt to join game " + data.gameId + " failed");
 			console.log("Reason: " + data.reason);
@@ -277,7 +274,7 @@ $(document).ready(function() {
 		
 		if ( client.overlay != null ) client.overlay.complete();
 		
-		if ( data.type == Event.prototype.TYPE.ENDOFGAME ) client.leaveGame();
+		if ( data.type == Event.prototype.TYPE.ENDOFGAME ) sendEvent( "leave-game" );
 	});
 
 	client.socket.on('list', function(data) {
@@ -321,7 +318,7 @@ Client.prototype.registerHandlers = function() {
 	var _this = this;
 
 	document.addEventListener( "switch-screen", function( e ) {
-		if (e.detail.toScreen == screens.LIST) this.socket.emit('list', null);
+		if (e.detail.toScreen == screens.LIST) _this.socket.emit('list', null);
 	}, true);
 
 	document.addEventListener( "attempt-join-game", function( e ) {
@@ -330,21 +327,19 @@ Client.prototype.registerHandlers = function() {
 		_this.players = [];
 		_this.zones = [];
 
-		_this.socket.emit( "join", e.data.id );
+		_this.socket.emit( "join", e.detail.id );
 	}, true);
 
 	document.addEventListener( "attempt-add-game", function( e ) {
 		clearInterval( _this.updateInterval );
 		_this.updateInterval = setInterval( clientUpdate, 60 );	
 
-		var data = {team1: e.team1Nation, team2: e.team2Nation};
-
-		console.log( 'Add Game: ' + data.team1 + ' v ' + data.team2 );
+		var data = { team1: e.detail.team1Nation, team2: e.detail.team2Nation };
 		_this.socket.emit( 'addgame', data );
 
-		var e = new Event( "switch-screen" );
-		e.toScreen = screens.LIST;
-		document.dispatchEvent( e );		
+		console.log( 'Add Game: ' + data.team1 + ' v ' + data.team2 );		
+
+		sendEvent( "switch-screen", { toScreen: screens.LIST } );		
 	}, true);
 
 	document.addEventListener( "leave-game", function( e ) {
@@ -353,52 +348,9 @@ Client.prototype.registerHandlers = function() {
 
 		_this.socket.emit( 'leave', null );
 
-		var e = new Event( "switch-screen" );
-		e.toScreen = screens.LIST;
-		document.dispatchEvent( e );		
+		sendEvent( "switch-screen", { toScreen: screens.LIST } );
 	}, true);
 }
-
-Client.prototype.leaveGame = function() {
-	var e = new Event( "leave-game" );
-	document.dispatchEvent( e );
-}
-
-/*
-Client.prototype.attemptToJoinGame = function(id) {
-	clearInterval(updateInterval);
-
-	gameid = id;
-	players = [];
-	zones = [];
-
-	socket.emit('join', gameid);
-}*/
-/*
-Client.prototype.attemptToAddGame = function(team1Nation, team2Nation) {
-	clearInterval(updateInterval);
-	setInterval(update, 60);	
-
-	var data = {team1: team1Nation, team2: team2Nation};
-
-	console.log('Add Game: ' + data.team1 + ' v ' + data.team2);
-	socket.emit('addgame', data);
-
-	var e = new Event( "switch-screen" );
-	e.toScreen = screens.LIST;
-	document.dispatchEvent( e );
-}*/
-/*
-Client.prototype.leaveGame = function() {
-	clearInterval(updateInterval);
-	setInterval(update, 60);
-
-	socket.emit('leave', null);
-
-	var e = new Event( "switch-screen" );
-	e.toScreen = screens.LIST;
-	document.dispatchEvent( e );
-}	*/
 
 var clientUpdate = function() {
 	client.update();
@@ -496,8 +448,6 @@ Client.prototype.render = function() {
 	case screens.GAME:
 		if ( this.inDebugMode ) this.socket.emit('debuginput', keyboard.KEY);
 		else this.socket.emit('input', this.keys);
-
-		console.log( this.keys );	
 
 		this.prepareKeyPacket();
 		keyboard.updateState();
