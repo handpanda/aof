@@ -1,0 +1,24 @@
+{
+
+	"name": "aof",
+	"version": "0.1.0",
+
+	"description": "Soccer Game Server",
+	"main": "server_main.js",
+
+	"repository": {
+		"type": "git",
+		"url": "https://github.com/handpanda/aof"
+	},
+
+	"author": {
+		"name": "Graham Smith",
+		"email": "smit4580@umn.edu"
+	},
+
+	"dependencies": {
+		"amdefine": ">= 1.0.0",
+		"optimist": ">= 0.6.1",
+		"socket.io": ">= 1.3.6"
+	}
+}
