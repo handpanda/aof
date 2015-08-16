@@ -118,23 +118,34 @@
 	<body>
 
 	<div id="arena">
-		
+		<div id="menu" class="row-fluid">
 
-
-				<div id="menu" class="row-fluid">
-
-					<div id="team1data" class="span2">
-						<img id="team1image" src="">
-					</div>
-					<div id="center" class="span8">
-
-					</div>
-					<div id="team2data" class="span2">
-						<img id="team2image" src="">
-					</div>
-				</div>	
-					<canvas id="main">
-				</canvas>
+			<div id="team1data" class="span2">
+				<img id="team1image" src="">
 			</div>
+			<div id="center" class="span8">
+
+			</div>
+			<div id="team2data" class="span2">
+				<img id="team2image" src="">
+			</div>	
+		</div>	
+			<canvas id="main">	</canvas>
+		</div>
 	</body>	
+
+	<div id="game-list">
+		<table>
+			<tr>
+				<td>Name</td>
+				<td>Score</td>
+				<td>Time</td>
+			</tr>
+			<tr>
+				<td>808</td>
+				<td>DNI 1 - 3 SWE</td>
+				<td>44:45</td>
+			</tr>
+		</table>
+	</div>
 </html>
