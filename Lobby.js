@@ -2,6 +2,7 @@ var Game = require('./Game.js');
 var Team = require('./Team.js');
 var nations = require('./nations.js');
 var discrete = require('./discrete.js');
+var createRandom = require('./createRandom.js');
 
 /*
 	Main Menu

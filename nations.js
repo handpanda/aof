@@ -9,14 +9,12 @@ var nations = [
 	cos = { name: 'Kingdom of Prussia', shortname: "PRU", img: 'img/prussia50.png' },
 	pol = { name: 'Polish Home Army', shortname: "POL", img: 'img/poland50.png' },
 	swe = { name: 'Swedish Empire', shortname: "SWE", img: 'img/sweden50.png' },
+
+	irq = { name: 'Iroquois Nation', shortname: "IRQ", img: '' },
+	lig = { name: 'Legio I Germanica', shortname: "LIG", img: '' },
+	tib = { name: 'Empire of Tibet', shortname: "TIB", img: '' },
+	ip = { name: 'Immortals Persepolis', shortname: "IP", img: '' },	
 ];
-
-// Legio I Germanica
-// Mongols
-// Afrika Corps
-// Teutonic Knights
-// Immortals Persepolis
-
 
 return nations;
 

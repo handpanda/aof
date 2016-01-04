@@ -32,8 +32,8 @@ var AOFClient = function( ioClient ) {
 	});
 	
 	// Client wants to add a game
-	this.on('addgame', function(data) {
-		console.log('/addgame/: ' + 'Client ' + client.ident + ' requested to add game: ' + data.team1.name + ' v ' + data.team2.name );		
+	this.on('addGame', function(data) {
+		console.log('/addGame/: ' + 'Client ' + client.ident + ' requested to add game: ' + data.team1.name + ' v ' + data.team2.name );		
 		
 		var id = client.lobby.addGame( data.team1, data.team2 );
 		

@@ -9,7 +9,7 @@ Server Packets
 ==============
 
 list - return a list of currently active games
-addgame - add a game
+addGame - add a game
 join - join some game
 leave - leave the game you're in
 message - get username or broadcast message

@@ -39,81 +39,8 @@
 			});
 		</script>
 
-		<style type="text/css">
-			html {
-			  width:  100%;
-			  height: 100%;
-			  margin: 0px;
-			}
-			body {
-				background-color: #000;
-				color: #fff;
-				font-size: 28px;
-				font-weight: bold;
-				width:  100%;
-		  		height: 100%;
-		  		margin: 0px;
-				padding: 0;
-				font-family: sans-serif;
-				text-align: center;
-			}
-			#log {
-				position: absolute;
-				margin-bottom: 100px;
-				z-index: 0;
-			}
-			#log ul {
-				padding: 0;
-				margin: 0;
-			}
-			#log ul li {
-				list-style-type: none;
-			}
-			#arena {
-				background-color: black;
-			    padding-left: 0;
-			    padding-right: 0;
-					margin-left: auto;
-					margin-right: auto;
-			    display: inline-block;
-				z-index: 100;
-			}
-			#console {
-				background-color: black;
-				color: white;
-				border-top:1px solid white;
-				position: fixed;
-				bottom: 0;
-				width: 100%;
-				font-size: 18px;
-			}
-			#console input {
-				width: 100%;
-				background-color: inherit;
-				color: inherit;
-				font-size: inherit;
-			}
-			#arena { 
-				position:relative;
-			}
-			#arena canvas {
-				position:absolute; 
-				top:0; 
-				left:0; 
-				z-index: -1;
-			}
-			#arena menu {
-				position:absolute; 
-				top:0; 
-				left:0; 
-				z-index: 0;
-			}			
-			.buffer { 
-				margin-top:20px; 
-				margin-left:5px; 
-				margin-right:5px; 
-			}
-		</style>
+
+		<link rel="stylesheet" type="text/css" href="./css/arena.css" />
 	</head>
 	<body>
 
@@ -134,18 +61,7 @@
 		</div>
 	</body>	
 
-	<div id="game-list">
-		<table>
-			<tr>
-				<td>Name</td>
-				<td>Score</td>
-				<td>Time</td>
-			</tr>
-			<tr>
-				<td>808</td>
-				<td>DNI 1 - 3 SWE</td>
-				<td>44:45</td>
-			</tr>
-		</table>
-	</div>
+	<table id="game-table">
+
+	</table>
 </html>

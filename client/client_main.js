@@ -115,7 +115,6 @@ $(document).ready(function() {
 	client.socket = new io.connect("http://localhost:4000");
 	var entry_el = $('#entry');
 
-
 	client.socket.on('message', function(data) {
 		//var data = message;
 
@@ -278,16 +277,8 @@ $(document).ready(function() {
 	});
 
 	client.socket.on('list', function(data) {
-		var found;
-		
-		client.menu.clearGameList();
-
-		for ( d in data ) {
-			client.menu.addGame( data[d] );		
-		}
-			
-		client.menu.refresh( client.scrollBox );
-	});		
+		client.menu.updateGameList( data );
+	});	
 
 	client.socket.emit('ready', null);
 
@@ -335,7 +326,7 @@ Client.prototype.registerHandlers = function() {
 		_this.updateInterval = setInterval( clientUpdate, 60 );	
 
 		var data = { team1: e.detail.team1Nation, team2: e.detail.team2Nation };
-		_this.socket.emit( 'addgame', data );
+		_this.socket.emit( 'addGame', data );
 
 		console.log( 'Add Game: ' + data.team1 + ' v ' + data.team2 );		
 

@@ -1,10 +1,26 @@
-define( ["jquery", "screens", "nations", "client/sendEvent" ], function($, screens, nations, sendEvent ) {
+define( ["jquery",
+		 "client/errors", 
+		 "screens", 
+		 "nations", 
+		 "client/sendEvent",
+		 "client/DivTable",
+		 "client/GameRow", ], function(
+
+		 $, 
+		 errors,
+		 screens, 
+		 nations, 
+		 sendEvent,
+		 DivTable,
+		 GameRow ) {
 
 var menudims = {
 	list: { name: 'list', xPos: 0, yPos: 0, width: 500},
 	exitbutton: { name: 'exitbutton', xPos: 5, yPos: 5, width: 300},
 	score: { name: 'score', xPos: 305, yPos: 5, width: 500},
 }
+
+var gameColumnNames = ["Id", "Score", "Time", "Players", "Actions"];
 
 var Menu = function() {
 	this.gameList = [];
@@ -17,6 +33,10 @@ var Menu = function() {
 	this.y = 0;
 
 	this.registerHandlers();
+
+	this.gameTable = new DivTable( "game-table", gameColumnNames );
+
+	$( "#center" ).append( this.gameTable.dom );
 }	
 
 Menu.prototype.clearGameList = function() {
@@ -25,16 +45,22 @@ Menu.prototype.clearGameList = function() {
 
 Menu.prototype.addGame = function( game ) {
 	var found = false;
-			
-	for (g in this.gameList) {
-		if (game.id == this.gameList[g].id) {
+	
+	for ( var r in this.gameTable.rows ) {
+		row = this.gameTable.rows[r];
+
+		if ( row.data.id == game.id ) {
 			found = true;
 			break;
 		}
-	}		
+	}
 	
 	if ( !found ) {
-		this.gameList.push( game );
+		var row = new GameRow( "game-row" );
+		row.parseGame( game );
+		row.update();
+
+		this.gameTable.insertRow( row );
 	}
 }
 
@@ -42,13 +68,31 @@ Menu.prototype.switchScreen = function( target ) {
 	sendEvent( "switch-screen", { toScreen: target });
 }
 
+Menu.prototype.updateGameList = function( data ) {
+	this.clearGameList();
+
+	for ( d in data ) {
+		this.addGame( data[d] );		
+	}	
+}
+
 Menu.prototype.registerHandlers = function() {
 	var _this = this;
 
 	document.addEventListener( "switch-screen", function( e ) {
+		if ( e.detail.toScreen === undefined ) {
+			throw new errors.EventFormatException( "switch-screen" );
+		}
+
 		_this.currentScreen = e.detail.toScreen;
 
 		_this.refresh();
+	});
+
+	document.addEventListener( "add-game", function( e ) {
+		if ( e.detail.game === undefined ) {
+			throw new errors.EventFormatException( "add-game" );
+		}		
 	});
 }
 
@@ -91,22 +135,7 @@ Menu.prototype.refresh = function() {
 
 			center.append( $( newGameButton ) );
 
-			// List of games in progress
-			for (g in this.gameList) {
-				var game = this.gameList[g];
-
-				var joinGameButton = document.createElement( "div" );
-
-				joinGameButton.setAttribute("class", "row-fluid buffer" );
-				
-				joinGameButton.onclick = function() {
-					sendEvent( "attempt-join-game", { id: game.id } );
-				}
-
-				joinGameButton.innerHTML = this.gameList[g].team1Nation.name + " vs " + this.gameList[g].team2Nation.name;
-			
-				center.append( $( joinGameButton ) );
-			}
+			// TODO: joinGameButton sends "attempt-join-game"
 			break;
 		case screens.NEWGAMETEAM1:
 			console.log('new game');
